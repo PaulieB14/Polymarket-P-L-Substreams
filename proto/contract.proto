@@ -186,6 +186,13 @@ message UserPnL {
     string losing_trades = 7;
     string win_rate = 8;
     google.protobuf.Timestamp last_activity = 9;
+    // Enhanced P&L data matching Dune query
+    string net_usdc = 10;           // Net USDC position (in/out)
+    string share_value = 11;        // Current value of token holdings
+    string trading_pnl = 12;        // net_usdc + share_value
+    string liq_pnl = 13;            // Liquidity provider P&L (airdrops/rewards)
+    string total_pnl = 14;          // trading_pnl + liq_pnl
+    repeated TokenHolding holdings = 15;  // Individual token holdings
 }
 
 message MarketPnL {
@@ -286,5 +293,43 @@ message Usdc_Approval {
     bytes owner = 5;
     bytes spender = 6;
     string value = 7;
+}
+
+// Enhanced P&L Data Structures
+message TokenHolding {
+    string token_id = 1;
+    string amount = 2;
+    string current_price = 3;
+    string share_value = 4;  // price * amount
+    string condition_id = 5;
+    string question = 6;
+    google.protobuf.Timestamp last_updated = 7;
+}
+
+message PriceData {
+    string token_id = 1;
+    string price = 2;
+    string maker_amount = 3;
+    string taker_amount = 4;
+    google.protobuf.Timestamp last_trade_time = 5;
+    uint64 block_number = 6;
+}
+
+message MarketMetadata {
+    string condition_id = 1;
+    string question_id = 2;
+    string question = 3;
+    string token0 = 4;
+    string token1 = 5;
+    google.protobuf.Timestamp created_at = 6;
+    uint64 block_number = 7;
+}
+
+message UsdcPosition {
+    string user_address = 1;
+    string net_usdc = 2;  // Net USDC in/out
+    string total_deposited = 3;
+    string total_withdrawn = 4;
+    google.protobuf.Timestamp last_activity = 5;
 }
   

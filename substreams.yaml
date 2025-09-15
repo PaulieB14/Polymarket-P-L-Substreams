@@ -81,4 +81,40 @@ modules:
     output:
       type: proto:contract.v1.PnLData
 
+  # Price Tracking from OrderFilled Events
+  - name: map_price_data
+    kind: map
+    initialBlock: 33605403
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.PriceData
+
+  # USDC Position Tracking
+  - name: map_usdc_positions
+    kind: map
+    initialBlock: 4023686
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.UsdcPosition
+
+  # Market Metadata Tracking
+  - name: map_market_metadata
+    kind: map
+    initialBlock: 4023686
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.MarketMetadata
+
+  # Enhanced P&L with Dune Query Compatibility
+  - name: map_enhanced_pnl
+    kind: map
+    initialBlock: 4023686
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.PnLData
+
 network: polygon

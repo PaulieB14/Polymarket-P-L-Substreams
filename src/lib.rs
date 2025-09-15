@@ -367,6 +367,13 @@ fn map_pnl_data(blk: eth::Block) -> Result<contract::PnLData, substreams::errors
                                     losing_trades: "0".to_string(),
                                     win_rate: "0".to_string(),
                                     last_activity: Some(blk.timestamp().to_owned()),
+                                    // Enhanced P&L fields
+                                    net_usdc: "0".to_string(),
+                                    share_value: "0".to_string(),
+                                    trading_pnl: "0".to_string(),
+                                    liq_pnl: "0".to_string(),
+                                    total_pnl: "0".to_string(),
+                                    holdings: Vec::new(),
                                 }
                             });
 
@@ -378,6 +385,198 @@ fn map_pnl_data(blk: eth::Block) -> Result<contract::PnLData, substreams::errors
                             user_pnl.total_trades = (current_trades + 1).to_string();
                             
                             user_pnl.last_activity = Some(blk.timestamp().to_owned());
+                        }
+                    }
+                }
+
+                // Process Condition Resolution for market P&L
+                if let Some(event) = abi::profitandloss_contract::events::ConditionResolution::match_and_decode(log) {
+                    let condition_id = Hex(&event.condition_id).to_string();
+                    let market_pnl = market_pnls.entry(condition_id.clone()).or_insert_with(|| {
+                        contract::MarketPnL {
+                            condition_id: condition_id.clone(),
+                            question_id: Hex(&event.question_id).to_string(),
+                            total_volume: "0".to_string(),
+                            total_trades: "0".to_string(),
+                            total_fees: "0".to_string(),
+                            winning_outcome: "0".to_string(),
+                            resolution_price: "0".to_string(),
+                            created_at: Some(blk.timestamp().to_owned()),
+                            resolved_at: Some(blk.timestamp().to_owned()),
+                        }
+                    });
+
+                    market_pnl.resolved_at = Some(blk.timestamp().to_owned());
+                    market_pnl.winning_outcome = "0".to_string(); // Would need to determine from payouts
+                }
+            }
+        }
+    }
+
+    // Convert HashMaps to Vecs
+    pnl_data.user_pnls = user_pnls.into_values().collect();
+    pnl_data.market_pnls = market_pnls.into_values().collect();
+    pnl_data.total_users = pnl_data.user_pnls.len() as u64;
+    pnl_data.total_volume = total_volume.to_string();
+
+    // Add global P&L summary
+    pnl_data.global_pnls.push(contract::GlobalPnL {
+        total_volume: total_volume.to_string(),
+        total_trades: total_trades.to_string(),
+        total_fees: "0".to_string(),
+        active_users: pnl_data.total_users.to_string(),
+        active_markets: pnl_data.market_pnls.len().to_string(),
+        resolved_markets: pnl_data.market_pnls.len().to_string(),
+        timestamp: Some(blk.timestamp().to_owned()),
+    });
+
+    Ok(pnl_data)
+}
+
+// Price Tracking Handler - Extract prices from OrderFilled events
+#[substreams::handlers::map]
+fn map_price_data(blk: eth::Block) -> Result<contract::PriceData, substreams::errors::Error> {
+    let price_data = contract::PriceData::default();
+    
+    for receipt in blk.receipts() {
+        for log in &receipt.receipt.logs {
+            if log.address == CTF_EXCHANGE_CONTRACT {
+                // Note: This would need CTF Exchange ABI to properly decode OrderFilled events
+                // For now, we'll create a placeholder that tracks basic price data
+                // In a real implementation, you'd decode OrderFilled events and calculate prices
+            }
+        }
+    }
+    
+    Ok(price_data)
+}
+
+// USDC Position Tracking Handler
+#[substreams::handlers::map]
+fn map_usdc_positions(blk: eth::Block) -> Result<contract::UsdcPosition, substreams::errors::Error> {
+    let usdc_positions: HashMap<String, contract::UsdcPosition> = HashMap::new();
+    
+    for receipt in blk.receipts() {
+        for log in &receipt.receipt.logs {
+            if log.address == USDC_CONTRACT {
+                // Note: This would need USDC ABI to properly decode Transfer events
+                // For now, we'll create a placeholder that tracks USDC positions
+                // In a real implementation, you'd decode Transfer events and track net USDC per user
+            }
+        }
+    }
+    
+    // Return the first position or default
+    Ok(usdc_positions.into_values().next().unwrap_or_default())
+}
+
+// Market Metadata Tracking Handler
+#[substreams::handlers::map]
+fn map_market_metadata(blk: eth::Block) -> Result<contract::MarketMetadata, substreams::errors::Error> {
+    let mut metadata = contract::MarketMetadata::default();
+    
+    for receipt in blk.receipts() {
+        for log in &receipt.receipt.logs {
+            if log.address == CTF_CONTRACT {
+                // Process Condition Preparation for market metadata
+                if let Some(event) = abi::profitandloss_contract::events::ConditionPreparation::match_and_decode(log) {
+                    metadata.condition_id = Hex(&event.condition_id).to_string();
+                    metadata.question_id = Hex(&event.question_id).to_string();
+                    metadata.question = "Unknown Question".to_string(); // Would need external metadata
+                    metadata.created_at = Some(blk.timestamp().to_owned());
+                    metadata.block_number = blk.number;
+                    break; // Return first market found
+                }
+            }
+        }
+    }
+    
+    Ok(metadata)
+}
+
+// Enhanced P&L Handler with Dune Query Compatibility
+#[substreams::handlers::map]
+fn map_enhanced_pnl(blk: eth::Block) -> Result<contract::PnLData, substreams::errors::Error> {
+    let mut pnl_data = contract::PnLData {
+        total_users: 0,
+        total_volume: "0".to_string(),
+        total_profits: "0".to_string(),
+        total_losses: "0".to_string(),
+        block_number: blk.number,
+        block_timestamp: Some(blk.timestamp().to_owned()),
+        ..Default::default()
+    };
+
+    let mut user_pnls: HashMap<String, contract::UserPnL> = HashMap::new();
+    let mut market_pnls: HashMap<String, contract::MarketPnL> = HashMap::new();
+    let mut total_volume = 0u64;
+    let mut total_trades = 0u64;
+    let _total_usdc_volume = 0u64;
+
+    // Process CTF events for enhanced P&L calculations
+    for receipt in blk.receipts() {
+        for log in &receipt.receipt.logs {
+            if log.address == CTF_CONTRACT {
+                // Process TransferSingle events for volume tracking
+                if let Some(event) = abi::profitandloss_contract::events::TransferSingle::match_and_decode(log) {
+                    let from_addr = Hex(&event.from).to_string();
+                    let to_addr = Hex(&event.to).to_string();
+                    let value: u64 = event.value.to_u64();
+
+                    // Skip zero transfers and mint/burn events
+                    if value == 0 || from_addr == "0x0000000000000000000000000000000000000000" || to_addr == "0x0000000000000000000000000000000000000000" {
+                        continue;
+                    }
+
+                    total_volume += value;
+                    total_trades += 1;
+
+                    // Track enhanced user P&L with Dune query compatibility
+                    for addr in [&from_addr, &to_addr] {
+                        if addr != "0x0000000000000000000000000000000000000000" {
+                            let user_pnl = user_pnls.entry(addr.clone()).or_insert_with(|| {
+                                contract::UserPnL {
+                                    user_address: addr.clone(),
+                                    total_realized_pnl: "0".to_string(),
+                                    total_unrealized_pnl: "0".to_string(),
+                                    total_volume: "0".to_string(),
+                                    total_trades: "0".to_string(),
+                                    winning_trades: "0".to_string(),
+                                    losing_trades: "0".to_string(),
+                                    win_rate: "0".to_string(),
+                                    last_activity: Some(blk.timestamp().to_owned()),
+                                    // Enhanced P&L fields matching Dune query
+                                    net_usdc: "0".to_string(),
+                                    share_value: "0".to_string(),
+                                    trading_pnl: "0".to_string(),
+                                    liq_pnl: "0".to_string(),
+                                    total_pnl: "0".to_string(),
+                                    holdings: Vec::new(),
+                                }
+                            });
+
+                            // Update user metrics
+                            let current_volume: u64 = user_pnl.total_volume.parse().unwrap_or(0);
+                            user_pnl.total_volume = (current_volume + value).to_string();
+                            
+                            let current_trades: u64 = user_pnl.total_trades.parse().unwrap_or(0);
+                            user_pnl.total_trades = (current_trades + 1).to_string();
+                            
+                            user_pnl.last_activity = Some(blk.timestamp().to_owned());
+
+                            // Calculate enhanced P&L metrics (simplified for now)
+                            // In a real implementation, you'd calculate:
+                            // - net_usdc: Net USDC in/out per user
+                            // - share_value: Current value of token holdings (price * amount)
+                            // - trading_pnl: net_usdc + share_value
+                            // - total_pnl: trading_pnl + liq_pnl
+                            
+                            // Placeholder calculations
+                            user_pnl.net_usdc = "0".to_string(); // Would need USDC tracking
+                            user_pnl.share_value = "0".to_string(); // Would need price * amount
+                            user_pnl.trading_pnl = "0".to_string(); // Would need net_usdc + share_value
+                            user_pnl.liq_pnl = "0".to_string(); // Would need airdrop/rewards tracking
+                            user_pnl.total_pnl = "0".to_string(); // Would need trading_pnl + liq_pnl
                         }
                     }
                 }
