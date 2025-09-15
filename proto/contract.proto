@@ -1,0 +1,290 @@
+syntax = "proto3";
+
+import "google/protobuf/timestamp.proto";
+
+package contract.v1;
+
+// CTF Events for P&L Tracking
+message CtfEvents {
+    repeated Ctf_ConditionPreparation condition_preparations = 1;
+    repeated Ctf_ConditionResolution condition_resolutions = 2;
+    repeated Ctf_PositionSplit position_splits = 3;
+    repeated Ctf_PositionMerge position_merges = 4;
+    repeated Ctf_PositionRedeem position_redemptions = 5;
+    repeated Ctf_TransferSingle transfer_singles = 6;
+    repeated Ctf_TransferBatch transfer_batches = 7;
+}
+
+// CTF Exchange Events (Orderbook)
+message CtfExchangeEvents {
+    repeated CtfExchange_OrderFilled order_filleds = 1;
+    repeated CtfExchange_OrdersMatched orders_matcheds = 2;
+    repeated CtfExchange_OrderCancelled order_cancelleds = 3;
+    repeated CtfExchange_FeeCharged fee_chargeds = 4;
+    repeated CtfExchange_TokenRegistered token_registereds = 5;
+}
+
+// USDC Events
+message UsdcEvents {
+    repeated Usdc_Transfer transfers = 1;
+    repeated Usdc_Approval approvals = 2;
+}
+
+// User Position Tracking
+message UserPositions {
+    repeated UserPosition positions = 1;
+    repeated PositionUpdate updates = 2;
+    repeated MarketResolution resolutions = 3;
+}
+
+// P&L Data Aggregation
+message PnLData {
+    repeated UserPnL user_pnls = 1;
+    repeated MarketPnL market_pnls = 2;
+    repeated GlobalPnL global_pnls = 3;
+    uint64 total_users = 4;
+    string total_volume = 5;
+    string total_profits = 6;
+    string total_losses = 7;
+    uint64 block_number = 8;
+    google.protobuf.Timestamp block_timestamp = 9;
+}
+// CTF Event Messages
+message Ctf_ConditionPreparation {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes condition_id = 5;
+    bytes oracle = 6;
+    bytes question_id = 7;
+    uint32 outcome_slot_count = 8;
+}
+
+message Ctf_ConditionResolution {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes condition_id = 5;
+    bytes oracle = 6;
+    bytes question_id = 7;
+    uint32 outcome_slot_count = 8;
+    repeated string payout_numerators = 9;
+    string payout_denominator = 10;
+}
+
+message Ctf_PositionSplit {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes stakeholder = 5;
+    bytes collateral_token = 6;
+    bytes parent_collection_id = 7;
+    bytes condition_id = 8;
+    repeated string partition = 9;
+    string amount = 10;
+}
+
+message Ctf_PositionMerge {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes stakeholder = 5;
+    bytes collateral_token = 6;
+    bytes parent_collection_id = 7;
+    bytes condition_id = 8;
+    repeated string partition = 9;
+    string amount = 10;
+}
+
+message Ctf_PositionRedeem {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes redeemer = 5;
+    bytes collateral_token = 6;
+    bytes parent_collection_id = 7;
+    bytes condition_id = 8;
+    repeated string index_sets = 9;
+    string payout = 10;
+}
+
+message Ctf_TransferSingle {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes operator = 5;
+    bytes from = 6;
+    bytes to = 7;
+    string token_id = 8;
+    string value = 9;
+}
+
+message Ctf_TransferBatch {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes operator = 5;
+    bytes from = 6;
+    bytes to = 7;
+    repeated string token_ids = 8;
+    repeated string values = 9;
+}
+
+// User Position Messages
+message UserPosition {
+    string user_address = 1;
+    string token_id = 2;
+    string condition_id = 3;
+    string outcome_index = 4;
+    string amount_held = 5;
+    string average_price = 6;
+    string total_bought = 7;
+    string total_sold = 8;
+    string realized_pnl = 9;
+    string unrealized_pnl = 10;
+    google.protobuf.Timestamp first_seen = 11;
+    google.protobuf.Timestamp last_updated = 12;
+}
+
+message PositionUpdate {
+    string user_address = 1;
+    string token_id = 2;
+    string transaction_hash = 3;
+    string update_type = 4; // "buy", "sell", "split", "merge", "redeem"
+    string amount = 5;
+    string price = 6;
+    string pnl_change = 7;
+    google.protobuf.Timestamp timestamp = 8;
+    uint64 block_number = 9;
+}
+
+message MarketResolution {
+    string condition_id = 1;
+    string question_id = 2;
+    repeated string payout_numerators = 3;
+    string payout_denominator = 4;
+    string winning_outcome = 5;
+    google.protobuf.Timestamp resolution_timestamp = 6;
+    uint64 block_number = 7;
+}
+
+// P&L Tracking Messages
+message UserPnL {
+    string user_address = 1;
+    string total_realized_pnl = 2;
+    string total_unrealized_pnl = 3;
+    string total_volume = 4;
+    string total_trades = 5;
+    string winning_trades = 6;
+    string losing_trades = 7;
+    string win_rate = 8;
+    google.protobuf.Timestamp last_activity = 9;
+}
+
+message MarketPnL {
+    string condition_id = 1;
+    string question_id = 2;
+    string total_volume = 3;
+    string total_trades = 4;
+    string total_fees = 5;
+    string winning_outcome = 6;
+    string resolution_price = 7;
+    google.protobuf.Timestamp created_at = 8;
+    google.protobuf.Timestamp resolved_at = 9;
+}
+
+message GlobalPnL {
+    string total_volume = 1;
+    string total_trades = 2;
+    string total_fees = 3;
+    string active_users = 4;
+    string active_markets = 5;
+    string resolved_markets = 6;
+    google.protobuf.Timestamp timestamp = 7;
+}
+
+// CTF Exchange Event Messages
+message CtfExchange_OrderFilled {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes maker = 5;
+    bytes taker = 6;
+    string maker_asset_id = 7;
+    string taker_asset_id = 8;
+    string maker_amount_filled = 9;
+    string taker_amount_filled = 10;
+    string fee = 11;
+    bytes order_hash = 12;
+}
+
+message CtfExchange_OrdersMatched {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    string maker_asset_id = 5;
+    string taker_asset_id = 6;
+    string maker_amount_filled = 7;
+    string taker_amount_filled = 8;
+    bytes taker_order_hash = 9;
+    bytes taker_order_maker = 10;
+}
+
+message CtfExchange_OrderCancelled {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes order_hash = 5;
+}
+
+message CtfExchange_FeeCharged {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes receiver = 5;
+    string token_id = 6;
+    string amount = 7;
+}
+
+message CtfExchange_TokenRegistered {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes condition_id = 5;
+    string token0 = 6;
+    string token1 = 7;
+}
+
+// USDC Event Messages
+message Usdc_Transfer {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes from = 5;
+    bytes to = 6;
+    string value = 7;
+}
+
+message Usdc_Approval {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes owner = 5;
+    bytes spender = 6;
+    string value = 7;
+}
+  

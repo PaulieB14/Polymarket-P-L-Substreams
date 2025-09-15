@@ -1,0 +1,84 @@
+specVersion: v0.1.0
+package:
+  name: polymarket-pnl
+  version: v0.1.0
+  description: "Polymarket P&L Substreams - Real-time profit and loss tracking for prediction markets on Polygon"
+  url: "https://github.com/PaulieB14/Polymarket-PnL-Substreams"
+  image: "./polymarket-pnl-icon.png"
+
+imports:
+    ethcommon: https://spkg.io/streamingfast/ethereum-common-v0.3.0.spkg
+
+protobuf:
+  files:
+    - contract.proto
+  importPaths:
+    - ./proto
+  excludePaths:
+    - sf/substreams
+    - google
+
+binaries:
+  default:
+    type: wasm/rust-v1
+    file: ./target/wasm32-unknown-unknown/release/substreams.wasm
+
+modules:
+  # CTF Events for P&L Tracking
+  - name: map_ctf_events
+    kind: map
+    initialBlock: 4023686
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0x4d97dcd97ec945f40cf65f87097ace5ea0476045
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.CtfEvents
+
+  # CTF Exchange Events (Orderbook)
+  - name: map_ctf_exchange_events
+    kind: map
+    initialBlock: 33605403
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.CtfExchangeEvents
+
+  # USDC Collateral Token Events
+  - name: map_usdc_events
+    kind: map
+    initialBlock: 4023686
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0x2791bca1f2de4661ed88a30c99a7a9449aa84174
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.UsdcEvents
+
+  # User Position Tracking
+  - name: map_user_positions
+    kind: map
+    initialBlock: 4023686
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.UserPositions
+
+  # P&L Calculations
+  - name: map_pnl_data
+    kind: map
+    initialBlock: 4023686
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.PnLData
+
+network: polygon
