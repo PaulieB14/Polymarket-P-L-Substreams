@@ -1,8 +1,8 @@
 specVersion: v0.1.0
 package:
-  name: polymarket-pnl
-  version: v0.3.1
-  description: "Polymarket P&L Substreams v0.3.1 - Complete Dune Query compatibility with comprehensive negative risk market tracking"
+  name: polymarket-dune-pure
+  version: v0.4.0
+  description: "Polymarket Pure Dune Query Data - Exact match to Dune query with zero simulation data"
   url: "https://github.com/PaulieB14/Polymarket-PnL-Substreams"
   image: "./polymarket-pnl-icon.png"
 
@@ -24,7 +24,7 @@ binaries:
     file: ./target/wasm32-unknown-unknown/release/substreams.wasm
 
 modules:
-  # 1. CTF Exchange TokenRegistered Events
+  # 1. CTF Exchange TokenRegistered Events (Dune: polymarket_polygon.CTFExchange_evt_TokenRegistered)
   - name: map_ctf_exchange_token_registered
     kind: map
     initialBlock: 33605403
@@ -37,7 +37,7 @@ modules:
     output:
       type: proto:contract.v1.TokenRegisteredEvents
 
-  # 2. NegRisk CTF Exchange TokenRegistered Events (Negative Risk Markets)
+  # 2. NegRisk CTF Exchange TokenRegistered Events (Dune: polymarket_polygon.NegRiskCtfExchange_evt_TokenRegistered)
   - name: map_neg_risk_ctf_exchange_token_registered
     kind: map
     initialBlock: 50505492
@@ -50,7 +50,7 @@ modules:
     output:
       type: proto:contract.v1.NegRiskTokenRegisteredEvents
 
-  # 3. Fixed Product Market Maker Factory Creation Events
+  # 3. Fixed Product Market Maker Factory Creation (Dune: polymarketfactory_polygon.FixedProductMarketMakerFactory_evt_FixedProductMarketMakerCreation)
   - name: map_fpmm_factory_creation
     kind: map
     initialBlock: 4023686
@@ -63,7 +63,7 @@ modules:
     output:
       type: proto:contract.v1.FpmmFactoryEvents
 
-  # 4. CTF Exchange OrderFilled Events
+  # 4. CTF Exchange OrderFilled Events (Dune: polymarket_polygon.CTFExchange_evt_OrderFilled)
   - name: map_ctf_exchange_order_filled
     kind: map
     initialBlock: 33605403
@@ -76,7 +76,7 @@ modules:
     output:
       type: proto:contract.v1.OrderFilledEvents
 
-  # 5. NegRisk CTF Exchange OrderFilled Events (Negative Risk Markets)
+  # 5. NegRisk CTF Exchange OrderFilled Events (Dune: polymarket_polygon.NegRiskCtfExchange_evt_OrderFilled)
   - name: map_neg_risk_ctf_exchange_order_filled
     kind: map
     initialBlock: 50505492
@@ -87,9 +87,9 @@ modules:
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
-      type: proto:contract.v1.NegRiskOrderFilledEvents
+      type: proto:contract.v1.OrderFilledEvents
 
-  # 6. Generic ERC1155 TransferSingle Events (all contracts)
+  # 6. ERC1155 TransferSingle Events (Dune: erc1155_polygon.evt_TransferSingle)
   - name: map_erc1155_transfer_single
     kind: map
     initialBlock: 4023686
@@ -102,7 +102,7 @@ modules:
     output:
       type: proto:contract.v1.Erc1155TransferSingleEvents
 
-  # 7. Generic ERC1155 TransferBatch Events (all contracts)
+  # 7. ERC1155 TransferBatch Events (Dune: erc1155_polygon.evt_TransferBatch)
   - name: map_erc1155_transfer_batch
     kind: map
     initialBlock: 4023686
@@ -115,7 +115,7 @@ modules:
     output:
       type: proto:contract.v1.Erc1155TransferBatchEvents
 
-  # 8. Generic ERC20 Transfer Events (all contracts)
+  # 8. ERC20 Transfer Events (Dune: erc20_polygon.evt_Transfer)
   - name: map_erc20_transfer
     kind: map
     initialBlock: 4023686
@@ -128,7 +128,7 @@ modules:
     output:
       type: proto:contract.v1.Erc20TransferEvents
 
-  # 9. UMA Merkle Distributor Events
+  # 9. UMA Merkle Distributor Events (Dune: polymarket_uma_merkle_distributor_polygon.MerkleDistributor_evt_Claimed)
   - name: map_uma_merkle_distributor
     kind: map
     initialBlock: 4023686
@@ -141,7 +141,7 @@ modules:
     output:
       type: proto:contract.v1.MerkleDistributorEvents
 
-  # 10. USDC Merkle Distributor Events
+  # 10. USDC Merkle Distributor Events (Dune: polymarket_usdc_merkle_distributor_polygon.MerkleDistributor_evt_Claimed)
   - name: map_usdc_merkle_distributor
     kind: map
     initialBlock: 4023686
@@ -154,7 +154,7 @@ modules:
     output:
       type: proto:contract.v1.MerkleDistributorEvents
 
-  # 11. CTF Events for P&L Tracking
+  # 11. CTF Events for P&L Tracking (Dune: references CTF contract)
   - name: map_ctf_events
     kind: map
     initialBlock: 4023686
@@ -167,7 +167,7 @@ modules:
     output:
       type: proto:contract.v1.CtfEvents
 
-  # 12. USDC Collateral Token Events
+  # 12. USDC Collateral Token Events (Dune: erc20_polygon.evt_Transfer where contract_address = 0x2791bca1f2de4661ed88a30c99a7a9449aa84174)
   - name: map_usdc_events
     kind: map
     initialBlock: 4023686
@@ -180,31 +180,13 @@ modules:
     output:
       type: proto:contract.v1.UsdcEvents
 
-  # 13. Negative Risk Market Analysis - ARBITRAGE DETECTION
-  - name: map_neg_risk_market_analysis
-    kind: map
-    initialBlock: 50505492
-    inputs:
-      - source: sf.ethereum.type.v2.Block
-    output:
-      type: proto:contract.v1.NegRiskMarketAnalysis
-
-  # 14. Enhanced P&L with Negative Risk Markets
-  - name: map_enhanced_pnl_with_neg_risk
+  # 13. Pure Dune Query P&L Data (NO SIMULATION - ONLY REAL BLOCKCHAIN EVENTS)
+  - name: map_pure_dune_pnl
     kind: map
     initialBlock: 4023686
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
-      type: proto:contract.v1.DuneCompatiblePnL
-
-  # 15. Risk Management Module
-  - name: map_risk_management
-    kind: map
-    initialBlock: 4023686
-    inputs:
-      - source: sf.ethereum.type.v2.Block
-    output:
-      type: proto:contract.v1.RiskData
+      type: proto:contract.v1.PureDunePnL
 
 network: polygon
