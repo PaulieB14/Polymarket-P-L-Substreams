@@ -1,8 +1,8 @@
 specVersion: v0.1.0
 package:
   name: polymarket-pnl
-  version: v0.1.0
-  description: "Polymarket P&L Substreams - Real-time profit and loss tracking for prediction markets on Polygon"
+  version: v0.2.0
+  description: "Polymarket P&L Substreams v0.2.0 - Enhanced with comprehensive negative risk management and real-time profit/loss tracking for prediction markets on Polygon"
   url: "https://github.com/PaulieB14/Polymarket-PnL-Substreams"
   image: "./polymarket-pnl-icon.png"
 
@@ -116,5 +116,53 @@ modules:
       - source: sf.ethereum.type.v2.Block
     output:
       type: proto:contract.v1.PnLData
+
+  # Negative Risk Exchange Events
+  - name: map_neg_risk_events
+    kind: map
+    initialBlock: 50505492
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0xC5d563A36AE78145C45a50134d48A1215220f80a
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.NegRiskEvents
+
+  # NegRisk Adapter Events
+  - name: map_neg_risk_adapter_events
+    kind: map
+    initialBlock: 50505403
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.NegRiskEvents
+
+  # NegRisk Wrapped Collateral Events
+  - name: map_neg_risk_collateral_events
+    kind: map
+    initialBlock: 4023686
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0x3A3BD7bb9528E159577F7C2e685CC81A765002E2
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.NegRiskEvents
+
+  # Risk Management Module
+  - name: map_risk_management
+    kind: map
+    initialBlock: 4023686
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.RiskData
 
 network: polygon

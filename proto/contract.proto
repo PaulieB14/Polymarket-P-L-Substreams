@@ -193,6 +193,43 @@ message UserPnL {
     string liq_pnl = 13;            // Liquidity provider P&L (airdrops/rewards)
     string total_pnl = 14;          // trading_pnl + liq_pnl
     repeated TokenHolding holdings = 15;  // Individual token holdings
+    
+    // Risk Management Metrics
+    RiskMetrics risk_metrics = 16;  // Comprehensive risk analysis
+    string max_drawdown = 17;       // Maximum loss from peak
+    string current_drawdown = 18;   // Current loss from peak
+    string risk_score = 19;         // Overall risk score (0-100)
+    string exposure_ratio = 20;     // Total exposure / net worth
+    string concentration_risk = 21; // Risk from single position
+    string volatility = 22;         // P&L volatility measure
+    string sharpe_ratio = 23;       // Risk-adjusted returns
+    string var_95 = 24;             // Value at Risk (95% confidence)
+    string expected_shortfall = 25; // Expected loss beyond VaR
+    repeated RiskAlert risk_alerts = 26; // Active risk warnings
+}
+
+// Risk Management Data Structures
+message RiskMetrics {
+    string total_exposure = 1;      // Total value at risk
+    string max_position_size = 2;   // Largest single position
+    string portfolio_concentration = 3; // Concentration in top position
+    string leverage_ratio = 4;      // Leverage used
+    string margin_ratio = 5;        // Available margin
+    string liquidation_risk = 6;    // Risk of liquidation
+    string correlation_risk = 7;    // Risk from correlated positions
+    string market_risk = 8;         // General market exposure
+    string liquidity_risk = 9;      // Risk from illiquid positions
+    string operational_risk = 10;   // Non-market risks
+}
+
+message RiskAlert {
+    string alert_type = 1;          // "high_exposure", "concentration", "drawdown", etc.
+    string severity = 2;            // "low", "medium", "high", "critical"
+    string message = 3;             // Human-readable alert
+    string value = 4;               // Current value triggering alert
+    string threshold = 5;           // Threshold that was exceeded
+    google.protobuf.Timestamp triggered_at = 6;
+    bool acknowledged = 7;          // Whether user acknowledged
 }
 
 message MarketPnL {
@@ -331,5 +368,116 @@ message UsdcPosition {
     string total_deposited = 3;
     string total_withdrawn = 4;
     google.protobuf.Timestamp last_activity = 5;
+}
+
+// Negative Risk Fee Module Events
+message NegRiskEvents {
+    repeated NegRisk_FeeCharged fee_chargeds = 1;
+    repeated NegRisk_RiskAssessed risk_assesseds = 2;
+    repeated NegRisk_PositionLiquidated position_liquidateds = 3;
+    repeated NegRisk_RiskThresholdExceeded risk_threshold_exceededs = 4;
+    repeated NegRisk_RiskMitigationApplied risk_mitigation_applieds = 5;
+}
+
+// Risk Management Data
+message RiskData {
+    repeated UserRiskProfile user_risks = 1;
+    repeated MarketRiskProfile market_risks = 2;
+    repeated GlobalRiskMetrics global_risks = 3;
+    repeated RiskAlert active_alerts = 4;
+    string total_risk_exposure = 5;
+    string system_risk_score = 6;
+    uint64 block_number = 7;
+    google.protobuf.Timestamp block_timestamp = 8;
+}
+
+// Negative Risk Event Messages
+message NegRisk_FeeCharged {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes user = 5;
+    string fee_amount = 6;
+    string risk_level = 7;
+    string reason = 8;
+}
+
+message NegRisk_RiskAssessed {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes user = 5;
+    string risk_score = 6;
+    string exposure_amount = 7;
+    string collateral_ratio = 8;
+}
+
+message NegRisk_PositionLiquidated {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes user = 5;
+    string liquidated_amount = 6;
+    string liquidation_price = 7;
+    string remaining_collateral = 8;
+}
+
+message NegRisk_RiskThresholdExceeded {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes user = 5;
+    string threshold_type = 6;
+    string current_value = 7;
+    string threshold_value = 8;
+}
+
+message NegRisk_RiskMitigationApplied {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes user = 5;
+    string mitigation_type = 6;
+    string amount_applied = 7;
+    string new_risk_score = 8;
+}
+
+// Risk Profile Messages
+message UserRiskProfile {
+    string user_address = 1;
+    RiskMetrics risk_metrics = 2;
+    string current_risk_score = 3;
+    string max_risk_tolerance = 4;
+    string current_exposure = 5;
+    string available_margin = 6;
+    string liquidation_price = 7;
+    repeated RiskAlert active_alerts = 8;
+    google.protobuf.Timestamp last_assessment = 9;
+}
+
+message MarketRiskProfile {
+    string condition_id = 1;
+    string market_risk_score = 2;
+    string volatility = 3;
+    string liquidity_risk = 4;
+    string correlation_risk = 5;
+    string total_exposure = 6;
+    repeated string high_risk_users = 7;
+    google.protobuf.Timestamp last_updated = 8;
+}
+
+message GlobalRiskMetrics {
+    string total_system_exposure = 1;
+    string average_risk_score = 2;
+    string high_risk_users_count = 3;
+    string total_liquidations = 4;
+    string risk_fees_collected = 5;
+    string system_stability_score = 6;
+    google.protobuf.Timestamp timestamp = 7;
 }
   

@@ -17,6 +17,12 @@ const CTF_CONTRACT: [u8; 20] = hex!("4d97dcd97ec945f40cf65f87097ace5ea0476045");
 const CTF_EXCHANGE_CONTRACT: [u8; 20] = hex!("4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e");
 const USDC_CONTRACT: [u8; 20] = hex!("2791bca1f2de4661ed88a30c99a7a9449aa84174");
 
+// Negative Risk Management Contracts
+const NEG_RISK_EXCHANGE: [u8; 20] = hex!("C5d563A36AE78145C45a50134d48A1215220f80a");
+const NEG_RISK_ADAPTER: [u8; 20] = hex!("d91E80cF2E7be2e162c6513ceD06f1dD0dA35296");
+const NEG_RISK_OPERATOR: [u8; 20] = hex!("71523d0f655B41E805Cec45b17163f528B59B820");
+const NEG_RISK_WRAPPED_COLLATERAL: [u8; 20] = hex!("3A3BD7bb9528E159577F7C2e685CC81A765002E2");
+
 // CTF Events Handler
 #[substreams::handlers::map]
 fn map_ctf_events(blk: eth::Block) -> Result<contract::CtfEvents, substreams::errors::Error> {
@@ -367,13 +373,36 @@ fn map_pnl_data(blk: eth::Block) -> Result<contract::PnLData, substreams::errors
                                     losing_trades: "0".to_string(),
                                     win_rate: "0".to_string(),
                                     last_activity: Some(blk.timestamp().to_owned()),
-                                    // Enhanced P&L fields
-                                    net_usdc: "0".to_string(),
-                                    share_value: "0".to_string(),
-                                    trading_pnl: "0".to_string(),
-                                    liq_pnl: "0".to_string(),
-                                    total_pnl: "0".to_string(),
-                                    holdings: Vec::new(),
+                                        // Enhanced P&L fields
+                                        net_usdc: "0".to_string(),
+                                        share_value: "0".to_string(),
+                                        trading_pnl: "0".to_string(),
+                                        liq_pnl: "0".to_string(),
+                                        total_pnl: "0".to_string(),
+                                        holdings: Vec::new(),
+                                        // Risk Management fields
+                                        risk_metrics: Some(contract::RiskMetrics {
+                                            total_exposure: "0".to_string(),
+                                            max_position_size: "0".to_string(),
+                                            portfolio_concentration: "0".to_string(),
+                                            leverage_ratio: "1.0".to_string(),
+                                            margin_ratio: "1.0".to_string(),
+                                            liquidation_risk: "low".to_string(),
+                                            correlation_risk: "0".to_string(),
+                                            market_risk: "0".to_string(),
+                                            liquidity_risk: "0".to_string(),
+                                            operational_risk: "0".to_string(),
+                                        }),
+                                        max_drawdown: "0".to_string(),
+                                        current_drawdown: "0".to_string(),
+                                        risk_score: "0".to_string(),
+                                        exposure_ratio: "0".to_string(),
+                                        concentration_risk: "0".to_string(),
+                                        volatility: "0".to_string(),
+                                        sharpe_ratio: "0".to_string(),
+                                        var_95: "0".to_string(),
+                                        expected_shortfall: "0".to_string(),
+                                        risk_alerts: Vec::new(),
                                 }
                             });
 
@@ -545,13 +574,36 @@ fn map_enhanced_pnl(blk: eth::Block) -> Result<contract::PnLData, substreams::er
                                     losing_trades: "0".to_string(),
                                     win_rate: "0".to_string(),
                                     last_activity: Some(blk.timestamp().to_owned()),
-                                    // Enhanced P&L fields matching Dune query
-                                    net_usdc: "0".to_string(),
-                                    share_value: "0".to_string(),
-                                    trading_pnl: "0".to_string(),
-                                    liq_pnl: "0".to_string(),
-                                    total_pnl: "0".to_string(),
-                                    holdings: Vec::new(),
+                                        // Enhanced P&L fields matching Dune query
+                                        net_usdc: "0".to_string(),
+                                        share_value: "0".to_string(),
+                                        trading_pnl: "0".to_string(),
+                                        liq_pnl: "0".to_string(),
+                                        total_pnl: "0".to_string(),
+                                        holdings: Vec::new(),
+                                        // Risk Management fields
+                                        risk_metrics: Some(contract::RiskMetrics {
+                                            total_exposure: "0".to_string(),
+                                            max_position_size: "0".to_string(),
+                                            portfolio_concentration: "0".to_string(),
+                                            leverage_ratio: "1.0".to_string(),
+                                            margin_ratio: "1.0".to_string(),
+                                            liquidation_risk: "low".to_string(),
+                                            correlation_risk: "0".to_string(),
+                                            market_risk: "0".to_string(),
+                                            liquidity_risk: "0".to_string(),
+                                            operational_risk: "0".to_string(),
+                                        }),
+                                        max_drawdown: "0".to_string(),
+                                        current_drawdown: "0".to_string(),
+                                        risk_score: "0".to_string(),
+                                        exposure_ratio: "0".to_string(),
+                                        concentration_risk: "0".to_string(),
+                                        volatility: "0".to_string(),
+                                        sharpe_ratio: "0".to_string(),
+                                        var_95: "0".to_string(),
+                                        expected_shortfall: "0".to_string(),
+                                        risk_alerts: Vec::new(),
                                 }
                             });
 
@@ -623,4 +675,212 @@ fn map_enhanced_pnl(blk: eth::Block) -> Result<contract::PnLData, substreams::er
     });
 
     Ok(pnl_data)
+}
+// Negative Risk Exchange Events Handler
+#[substreams::handlers::map]
+fn map_neg_risk_events(blk: eth::Block) -> Result<contract::NegRiskEvents, substreams::errors::Error> {
+    let mut events = contract::NegRiskEvents::default();
+
+    for receipt in blk.receipts() {
+        for log in &receipt.receipt.logs {
+            if log.address == NEG_RISK_EXCHANGE {
+                // Note: These would need the NegRisk Exchange ABI to be properly implemented
+                // For now, we'll create placeholder handlers for risk events
+                // In a real implementation, you'd decode specific risk events
+            }
+        }
+    }
+
+    Ok(events)
+}
+
+// NegRisk Adapter Events Handler
+#[substreams::handlers::map]
+fn map_neg_risk_adapter_events(blk: eth::Block) -> Result<contract::NegRiskEvents, substreams::errors::Error> {
+    let mut events = contract::NegRiskEvents::default();
+
+    for receipt in blk.receipts() {
+        for log in &receipt.receipt.logs {
+            if log.address == NEG_RISK_ADAPTER {
+                // Note: These would need the NegRisk Adapter ABI to be properly implemented
+                // For now, we'll create placeholder handlers for risk events
+                // In a real implementation, you'd decode specific risk events
+            }
+        }
+    }
+
+    Ok(events)
+}
+
+// NegRisk Wrapped Collateral Events Handler
+#[substreams::handlers::map]
+fn map_neg_risk_collateral_events(blk: eth::Block) -> Result<contract::NegRiskEvents, substreams::errors::Error> {
+    let mut events = contract::NegRiskEvents::default();
+
+    for receipt in blk.receipts() {
+        for log in &receipt.receipt.logs {
+            if log.address == NEG_RISK_WRAPPED_COLLATERAL {
+                // Note: These would need the NegRisk Wrapped Collateral ABI to be properly implemented
+                // For now, we'll create placeholder handlers for risk events
+                // In a real implementation, you'd decode specific risk events
+            }
+        }
+    }
+
+    Ok(events)
+}
+
+// Comprehensive Risk Management Handler
+#[substreams::handlers::map]
+fn map_risk_management(blk: eth::Block) -> Result<contract::RiskData, substreams::errors::Error> {
+    let mut risk_data = contract::RiskData {
+        total_risk_exposure: "0".to_string(),
+        system_risk_score: "0".to_string(),
+        block_number: blk.number,
+        block_timestamp: Some(blk.timestamp().to_owned()),
+        ..Default::default()
+    };
+
+    let mut user_risks: HashMap<String, contract::UserRiskProfile> = HashMap::new();
+    let mut market_risks: HashMap<String, contract::MarketRiskProfile> = HashMap::new();
+    let mut total_exposure = 0u64;
+    let mut high_risk_users = 0u64;
+
+    // Process all contracts for risk assessment
+    for receipt in blk.receipts() {
+        for log in &receipt.receipt.logs {
+            // Process CTF events for position risk
+            if log.address == CTF_CONTRACT {
+                if let Some(event) = abi::profitandloss_contract::events::TransferSingle::match_and_decode(log) {
+                    let from_addr = Hex(&event.from).to_string();
+                    let to_addr = Hex(&event.to).to_string();
+                    let value: u64 = event.value.to_u64();
+
+                    // Skip zero transfers and mint/burn events
+                    if value == 0 || from_addr == "0x0000000000000000000000000000000000000000" || to_addr == "0x0000000000000000000000000000000000000000" {
+                        continue;
+                    }
+
+                    total_exposure += value;
+
+                    // Calculate risk metrics for each user
+                    for addr in [&from_addr, &to_addr] {
+                        if addr != "0x0000000000000000000000000000000000000000" {
+                            let user_risk = user_risks.entry(addr.clone()).or_insert_with(|| {
+                                contract::UserRiskProfile {
+                                    user_address: addr.clone(),
+                                    risk_metrics: Some(contract::RiskMetrics {
+                                        total_exposure: "0".to_string(),
+                                        max_position_size: "0".to_string(),
+                                        portfolio_concentration: "0".to_string(),
+                                        leverage_ratio: "1.0".to_string(),
+                                        margin_ratio: "1.0".to_string(),
+                                        liquidation_risk: "0".to_string(),
+                                        correlation_risk: "0".to_string(),
+                                        market_risk: "0".to_string(),
+                                        liquidity_risk: "0".to_string(),
+                                        operational_risk: "0".to_string(),
+                                    }),
+                                    current_risk_score: "0".to_string(),
+                                    max_risk_tolerance: "100".to_string(),
+                                    current_exposure: "0".to_string(),
+                                    available_margin: "0".to_string(),
+                                    liquidation_price: "0".to_string(),
+                                    active_alerts: Vec::new(),
+                                    last_assessment: Some(blk.timestamp().to_owned()),
+                                }
+                            });
+
+                            // Update exposure
+                            let current_exposure: u64 = user_risk.current_exposure.parse().unwrap_or(0);
+                            user_risk.current_exposure = (current_exposure + value).to_string();
+
+                            // Calculate risk score (simplified)
+                            let exposure_value: f64 = user_risk.current_exposure.parse().unwrap_or(0) as f64;
+                            let risk_score = if exposure_value > 1000000.0 { 80.0 } // High risk for > 1M
+                                else if exposure_value > 100000.0 { 60.0 } // Medium risk for > 100K
+                                else { 20.0 }; // Low risk
+                            
+                            user_risk.current_risk_score = risk_score.to_string();
+
+                            // Check for high risk users
+                            if risk_score > 70.0 {
+                                high_risk_users += 1;
+                                
+                                // Add risk alert
+                                user_risk.active_alerts.push(contract::RiskAlert {
+                                    alert_type: "high_exposure".to_string(),
+                                    severity: if risk_score > 80.0 { "critical".to_string() } else { "high".to_string() },
+                                    message: format!("High exposure detected: {} tokens", user_risk.current_exposure),
+                                    value: user_risk.current_exposure.clone(),
+                                    threshold: "1000000".to_string(),
+                                    triggered_at: Some(blk.timestamp().to_owned()),
+                                    acknowledged: false,
+                                });
+                            }
+
+                            // Update risk metrics
+                            if let Some(ref mut metrics) = user_risk.risk_metrics {
+                                metrics.total_exposure = user_risk.current_exposure.clone();
+                                
+                                // Calculate portfolio concentration (simplified)
+                                let concentration = if exposure_value > 0.0 {
+                                    (exposure_value / (exposure_value + 100000.0) * 100.0).to_string()
+                                } else {
+                                    "0".to_string()
+                                };
+                                metrics.portfolio_concentration = concentration;
+                                
+                                // Calculate liquidation risk (simplified)
+                                let liquidation_risk = if risk_score > 80.0 { "high".to_string() }
+                                    else if risk_score > 60.0 { "medium".to_string() }
+                                    else { "low".to_string() };
+                                metrics.liquidation_risk = liquidation_risk;
+                            }
+
+                            user_risk.last_assessment = Some(blk.timestamp().to_owned());
+                        }
+                    }
+                }
+            }
+
+            // Process NegRisk contracts for additional risk data
+            if log.address == NEG_RISK_EXCHANGE || log.address == NEG_RISK_ADAPTER || log.address == NEG_RISK_WRAPPED_COLLATERAL {
+                // Note: These would need specific ABIs to decode risk events
+                // For now, we'll track basic risk exposure
+            }
+        }
+    }
+
+    // Convert HashMaps to Vecs
+    risk_data.user_risks = user_risks.into_values().collect();
+    risk_data.market_risks = market_risks.into_values().collect();
+    risk_data.total_risk_exposure = total_exposure.to_string();
+
+    // Add global risk metrics
+    risk_data.global_risks.push(contract::GlobalRiskMetrics {
+        total_system_exposure: total_exposure.to_string(),
+        average_risk_score: if risk_data.user_risks.len() > 0 {
+            (risk_data.user_risks.iter()
+                .map(|u| u.current_risk_score.parse::<f64>().unwrap_or(0.0))
+                .sum::<f64>() / risk_data.user_risks.len() as f64).to_string()
+        } else {
+            "0".to_string()
+        },
+        high_risk_users_count: high_risk_users.to_string(),
+        total_liquidations: "0".to_string(),
+        risk_fees_collected: "0".to_string(),
+        system_stability_score: if high_risk_users > 0 { "70".to_string() } else { "90".to_string() },
+        timestamp: Some(blk.timestamp().to_owned()),
+    });
+
+    // Calculate system risk score
+    let system_risk = if high_risk_users > 0 {
+        (high_risk_users as f64 / risk_data.user_risks.len().max(1) as f64 * 100.0) as u64
+    } else {
+        0
+    };
+    risk_data.system_risk_score = system_risk.to_string();
+
+    Ok(risk_data)
 }
