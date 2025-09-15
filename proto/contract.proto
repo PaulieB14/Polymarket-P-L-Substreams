@@ -4,6 +4,228 @@ import "google/protobuf/timestamp.proto";
 
 package contract.v1;
 
+// Negative Risk Market Analysis
+message NegRiskMarketAnalysis {
+    repeated NegRiskMarket markets = 1;
+    repeated ArbitrageOpportunity arbitrage_opportunities = 2;
+    repeated NegRiskConversion conversions = 3;
+    string total_arbitrage_value = 4;
+    uint64 block_number = 5;
+    google.protobuf.Timestamp block_timestamp = 6;
+}
+
+// Negative Risk Market
+message NegRiskMarket {
+    string event_id = 1;
+    string question = 2;
+    bool is_neg_risk = 3;
+    bool is_augmented = 4;
+    repeated NegRiskOutcome outcomes = 5;
+    string total_no_price = 6;  // Sum of all NO prices
+    string arbitrage_opportunity = 7;  // 1.00 - total_no_price
+    bool has_arbitrage = 8;  // true if arbitrage_opportunity > 0
+    google.protobuf.Timestamp created_at = 9;
+    uint64 block_number = 10;
+}
+
+// Negative Risk Outcome
+message NegRiskOutcome {
+    string outcome_id = 1;
+    string name = 2;
+    string yes_price = 3;
+    string no_price = 4;
+    bool is_placeholder = 5;
+    bool is_other = 6;
+    string market_id = 7;
+}
+
+// Arbitrage Opportunity
+message ArbitrageOpportunity {
+    string market_id = 1;
+    string event_id = 2;
+    string total_no_cost = 3;
+    string guaranteed_payout = 4;
+    string profit = 5;
+    string profit_percentage = 6;
+    repeated string no_outcomes = 7;  // Which NOs to buy
+    google.protobuf.Timestamp detected_at = 8;
+    uint64 block_number = 9;
+}
+
+// Negative Risk Conversion
+message NegRiskConversion {
+    string user_address = 1;
+    string from_outcome = 2;
+    string to_outcome = 3;
+    string amount = 4;
+    string conversion_rate = 5;
+    string transaction_hash = 6;
+    google.protobuf.Timestamp timestamp = 7;
+    uint64 block_number = 8;
+}
+
+// TokenRegistered Events
+message TokenRegisteredEvents {
+    repeated TokenRegistered token_registered = 1;
+}
+
+message TokenRegistered {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes condition_id = 5;
+    string token0 = 6;
+    string token1 = 7;
+}
+
+// NegRisk TokenRegistered Events
+message NegRiskTokenRegisteredEvents {
+    repeated NegRiskTokenRegistered neg_risk_token_registered = 1;
+}
+
+message NegRiskTokenRegistered {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes condition_id = 5;
+    string token0 = 6;
+    string token1 = 7;
+    bool is_neg_risk = 8;
+    bool is_augmented = 9;
+    string event_id = 10;
+}
+
+// OrderFilled Events
+message OrderFilledEvents {
+    repeated OrderFilled order_filled = 1;
+}
+
+message OrderFilled {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes maker = 5;
+    bytes taker = 6;
+    string maker_asset_id = 7;
+    string taker_asset_id = 8;
+    string maker_amount_filled = 9;
+    string taker_amount_filled = 10;
+    string fee = 11;
+    bytes order_hash = 12;
+}
+
+// NegRisk OrderFilled Events
+message NegRiskOrderFilledEvents {
+    repeated NegRiskOrderFilled neg_risk_order_filled = 1;
+}
+
+message NegRiskOrderFilled {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes maker = 5;
+    bytes taker = 6;
+    string maker_asset_id = 7;
+    string taker_asset_id = 8;
+    string maker_amount_filled = 9;
+    string taker_amount_filled = 10;
+    string fee = 11;
+    bytes order_hash = 12;
+    bool is_neg_risk = 13;
+    string event_id = 14;
+    string outcome_type = 15;  // "YES" or "NO"
+}
+
+// Fixed Product Market Maker Factory Events
+message FpmmFactoryEvents {
+    repeated FpmmFactoryCreation factory_creations = 1;
+}
+
+message FpmmFactoryCreation {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes fixed_product_market_maker = 5;
+    bytes creator = 6;
+    repeated bytes condition_ids = 7;
+    bytes collateral_token = 8;
+    string fee = 9;
+    string end_time = 10;
+    string question_id = 11;
+}
+
+// ERC1155 TransferSingle Events
+message Erc1155TransferSingleEvents {
+    repeated Erc1155TransferSingle transfer_single = 1;
+}
+
+message Erc1155TransferSingle {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes contract_address = 5;
+    bytes operator = 6;
+    bytes from = 7;
+    bytes to = 8;
+    string id = 9;
+    string value = 10;
+}
+
+// ERC1155 TransferBatch Events
+message Erc1155TransferBatchEvents {
+    repeated Erc1155TransferBatch transfer_batch = 1;
+}
+
+message Erc1155TransferBatch {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes contract_address = 5;
+    bytes operator = 6;
+    bytes from = 7;
+    bytes to = 8;
+    repeated string ids = 9;
+    repeated string values = 10;
+}
+
+// ERC20 Transfer Events
+message Erc20TransferEvents {
+    repeated Erc20Transfer transfer = 1;
+}
+
+message Erc20Transfer {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes contract_address = 5;
+    bytes from = 6;
+    bytes to = 7;
+    string value = 8;
+}
+
+// Merkle Distributor Events
+message MerkleDistributorEvents {
+    repeated MerkleDistributorClaimed claimed = 1;
+}
+
+message MerkleDistributorClaimed {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes airdrop_recipient = 5;
+    string amount = 6;
+    string token_address = 7;
+}
+
 // CTF Events for P&L Tracking
 message CtfEvents {
     repeated Ctf_ConditionPreparation condition_preparations = 1;
@@ -15,40 +237,43 @@ message CtfEvents {
     repeated Ctf_TransferBatch transfer_batches = 7;
 }
 
-// CTF Exchange Events (Orderbook)
-message CtfExchangeEvents {
-    repeated CtfExchange_OrderFilled order_filleds = 1;
-    repeated CtfExchange_OrdersMatched orders_matcheds = 2;
-    repeated CtfExchange_OrderCancelled order_cancelleds = 3;
-    repeated CtfExchange_FeeCharged fee_chargeds = 4;
-    repeated CtfExchange_TokenRegistered token_registereds = 5;
-}
-
 // USDC Events
 message UsdcEvents {
     repeated Usdc_Transfer transfers = 1;
     repeated Usdc_Approval approvals = 2;
 }
 
-// User Position Tracking
-message UserPositions {
-    repeated UserPosition positions = 1;
-    repeated PositionUpdate updates = 2;
-    repeated MarketResolution resolutions = 3;
-}
-
-// P&L Data Aggregation
-message PnLData {
+// Dune Compatible P&L Data
+message DuneCompatiblePnL {
     repeated UserPnL user_pnls = 1;
     repeated MarketPnL market_pnls = 2;
     repeated GlobalPnL global_pnls = 3;
-    uint64 total_users = 4;
-    string total_volume = 5;
-    string total_profits = 6;
-    string total_losses = 7;
-    uint64 block_number = 8;
-    google.protobuf.Timestamp block_timestamp = 9;
+    repeated TokenHolding token_holdings = 4;
+    repeated PriceData price_data = 5;
+    repeated MarketMetadata market_metadata = 6;
+    repeated UsdcPosition usdc_positions = 7;
+    repeated AirdropReward airdrop_rewards = 8;
+    repeated ArbitrageOpportunity arbitrage_opportunities = 9;
+    string total_users = 10;
+    string total_volume = 11;
+    string total_profits = 12;
+    string total_losses = 13;
+    uint64 block_number = 14;
+    google.protobuf.Timestamp block_timestamp = 15;
 }
+
+// Risk Management Data
+message RiskData {
+    repeated UserRiskProfile user_risks = 1;
+    repeated MarketRiskProfile market_risks = 2;
+    repeated GlobalRiskMetrics global_risks = 3;
+    repeated RiskAlert active_alerts = 4;
+    string total_risk_exposure = 5;
+    string system_risk_score = 6;
+    uint64 block_number = 7;
+    google.protobuf.Timestamp block_timestamp = 8;
+}
+
 // CTF Event Messages
 message Ctf_ConditionPreparation {
     string evt_tx_hash = 1;
@@ -137,42 +362,25 @@ message Ctf_TransferBatch {
     repeated string values = 9;
 }
 
-// User Position Messages
-message UserPosition {
-    string user_address = 1;
-    string token_id = 2;
-    string condition_id = 3;
-    string outcome_index = 4;
-    string amount_held = 5;
-    string average_price = 6;
-    string total_bought = 7;
-    string total_sold = 8;
-    string realized_pnl = 9;
-    string unrealized_pnl = 10;
-    google.protobuf.Timestamp first_seen = 11;
-    google.protobuf.Timestamp last_updated = 12;
+// USDC Event Messages
+message Usdc_Transfer {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes from = 5;
+    bytes to = 6;
+    string value = 7;
 }
 
-message PositionUpdate {
-    string user_address = 1;
-    string token_id = 2;
-    string transaction_hash = 3;
-    string update_type = 4; // "buy", "sell", "split", "merge", "redeem"
-    string amount = 5;
-    string price = 6;
-    string pnl_change = 7;
-    google.protobuf.Timestamp timestamp = 8;
-    uint64 block_number = 9;
-}
-
-message MarketResolution {
-    string condition_id = 1;
-    string question_id = 2;
-    repeated string payout_numerators = 3;
-    string payout_denominator = 4;
-    string winning_outcome = 5;
-    google.protobuf.Timestamp resolution_timestamp = 6;
-    uint64 block_number = 7;
+message Usdc_Approval {
+    string evt_tx_hash = 1;
+    uint32 evt_index = 2;
+    google.protobuf.Timestamp evt_block_time = 3;
+    uint64 evt_block_number = 4;
+    bytes owner = 5;
+    bytes spender = 6;
+    string value = 7;
 }
 
 // P&L Tracking Messages
@@ -187,49 +395,29 @@ message UserPnL {
     string win_rate = 8;
     google.protobuf.Timestamp last_activity = 9;
     // Enhanced P&L data matching Dune query
-    string net_usdc = 10;           // Net USDC position (in/out)
-    string share_value = 11;        // Current value of token holdings
-    string trading_pnl = 12;        // net_usdc + share_value
-    string liq_pnl = 13;            // Liquidity provider P&L (airdrops/rewards)
-    string total_pnl = 14;          // trading_pnl + liq_pnl
-    repeated TokenHolding holdings = 15;  // Individual token holdings
+    string net_usdc = 10;
+    string share_value = 11;
+    string trading_pnl = 12;
+    string liq_pnl = 13;
+    string total_pnl = 14;
+    repeated TokenHolding holdings = 15;
     
     // Risk Management Metrics
-    RiskMetrics risk_metrics = 16;  // Comprehensive risk analysis
-    string max_drawdown = 17;       // Maximum loss from peak
-    string current_drawdown = 18;   // Current loss from peak
-    string risk_score = 19;         // Overall risk score (0-100)
-    string exposure_ratio = 20;     // Total exposure / net worth
-    string concentration_risk = 21; // Risk from single position
-    string volatility = 22;         // P&L volatility measure
-    string sharpe_ratio = 23;       // Risk-adjusted returns
-    string var_95 = 24;             // Value at Risk (95% confidence)
-    string expected_shortfall = 25; // Expected loss beyond VaR
-    repeated RiskAlert risk_alerts = 26; // Active risk warnings
-}
-
-// Risk Management Data Structures
-message RiskMetrics {
-    string total_exposure = 1;      // Total value at risk
-    string max_position_size = 2;   // Largest single position
-    string portfolio_concentration = 3; // Concentration in top position
-    string leverage_ratio = 4;      // Leverage used
-    string margin_ratio = 5;        // Available margin
-    string liquidation_risk = 6;    // Risk of liquidation
-    string correlation_risk = 7;    // Risk from correlated positions
-    string market_risk = 8;         // General market exposure
-    string liquidity_risk = 9;      // Risk from illiquid positions
-    string operational_risk = 10;   // Non-market risks
-}
-
-message RiskAlert {
-    string alert_type = 1;          // "high_exposure", "concentration", "drawdown", etc.
-    string severity = 2;            // "low", "medium", "high", "critical"
-    string message = 3;             // Human-readable alert
-    string value = 4;               // Current value triggering alert
-    string threshold = 5;           // Threshold that was exceeded
-    google.protobuf.Timestamp triggered_at = 6;
-    bool acknowledged = 7;          // Whether user acknowledged
+    RiskMetrics risk_metrics = 16;
+    string max_drawdown = 17;
+    string current_drawdown = 18;
+    string risk_score = 19;
+    string exposure_ratio = 20;
+    string concentration_risk = 21;
+    string volatility = 22;
+    string sharpe_ratio = 23;
+    string var_95 = 24;
+    string expected_shortfall = 25;
+    repeated RiskAlert risk_alerts = 26;
+    
+    // Negative Risk Arbitrage
+    repeated ArbitrageOpportunity arbitrage_opportunities = 27;
+    string total_arbitrage_profit = 28;
 }
 
 message MarketPnL {
@@ -254,90 +442,12 @@ message GlobalPnL {
     google.protobuf.Timestamp timestamp = 7;
 }
 
-// CTF Exchange Event Messages
-message CtfExchange_OrderFilled {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes maker = 5;
-    bytes taker = 6;
-    string maker_asset_id = 7;
-    string taker_asset_id = 8;
-    string maker_amount_filled = 9;
-    string taker_amount_filled = 10;
-    string fee = 11;
-    bytes order_hash = 12;
-}
-
-message CtfExchange_OrdersMatched {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    string maker_asset_id = 5;
-    string taker_asset_id = 6;
-    string maker_amount_filled = 7;
-    string taker_amount_filled = 8;
-    bytes taker_order_hash = 9;
-    bytes taker_order_maker = 10;
-}
-
-message CtfExchange_OrderCancelled {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes order_hash = 5;
-}
-
-message CtfExchange_FeeCharged {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes receiver = 5;
-    string token_id = 6;
-    string amount = 7;
-}
-
-message CtfExchange_TokenRegistered {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes condition_id = 5;
-    string token0 = 6;
-    string token1 = 7;
-}
-
-// USDC Event Messages
-message Usdc_Transfer {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes from = 5;
-    bytes to = 6;
-    string value = 7;
-}
-
-message Usdc_Approval {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes owner = 5;
-    bytes spender = 6;
-    string value = 7;
-}
-
 // Enhanced P&L Data Structures
 message TokenHolding {
     string token_id = 1;
     string amount = 2;
     string current_price = 3;
-    string share_value = 4;  // price * amount
+    string share_value = 4;
     string condition_id = 5;
     string question = 6;
     google.protobuf.Timestamp last_updated = 7;
@@ -364,87 +474,19 @@ message MarketMetadata {
 
 message UsdcPosition {
     string user_address = 1;
-    string net_usdc = 2;  // Net USDC in/out
+    string net_usdc = 2;
     string total_deposited = 3;
     string total_withdrawn = 4;
     google.protobuf.Timestamp last_activity = 5;
 }
 
-// Negative Risk Fee Module Events
-message NegRiskEvents {
-    repeated NegRisk_FeeCharged fee_chargeds = 1;
-    repeated NegRisk_RiskAssessed risk_assesseds = 2;
-    repeated NegRisk_PositionLiquidated position_liquidateds = 3;
-    repeated NegRisk_RiskThresholdExceeded risk_threshold_exceededs = 4;
-    repeated NegRisk_RiskMitigationApplied risk_mitigation_applieds = 5;
-}
-
-// Risk Management Data
-message RiskData {
-    repeated UserRiskProfile user_risks = 1;
-    repeated MarketRiskProfile market_risks = 2;
-    repeated GlobalRiskMetrics global_risks = 3;
-    repeated RiskAlert active_alerts = 4;
-    string total_risk_exposure = 5;
-    string system_risk_score = 6;
-    uint64 block_number = 7;
-    google.protobuf.Timestamp block_timestamp = 8;
-}
-
-// Negative Risk Event Messages
-message NegRisk_FeeCharged {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes user = 5;
-    string fee_amount = 6;
-    string risk_level = 7;
-    string reason = 8;
-}
-
-message NegRisk_RiskAssessed {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes user = 5;
-    string risk_score = 6;
-    string exposure_amount = 7;
-    string collateral_ratio = 8;
-}
-
-message NegRisk_PositionLiquidated {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes user = 5;
-    string liquidated_amount = 6;
-    string liquidation_price = 7;
-    string remaining_collateral = 8;
-}
-
-message NegRisk_RiskThresholdExceeded {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes user = 5;
-    string threshold_type = 6;
-    string current_value = 7;
-    string threshold_value = 8;
-}
-
-message NegRisk_RiskMitigationApplied {
-    string evt_tx_hash = 1;
-    uint32 evt_index = 2;
-    google.protobuf.Timestamp evt_block_time = 3;
-    uint64 evt_block_number = 4;
-    bytes user = 5;
-    string mitigation_type = 6;
-    string amount_applied = 7;
-    string new_risk_score = 8;
+message AirdropReward {
+    string user_address = 1;
+    string token_address = 2;
+    string amount = 3;
+    string usd_value = 4;
+    google.protobuf.Timestamp claimed_at = 5;
+    uint64 block_number = 6;
 }
 
 // Risk Profile Messages
@@ -480,4 +522,26 @@ message GlobalRiskMetrics {
     string system_stability_score = 6;
     google.protobuf.Timestamp timestamp = 7;
 }
-  
+
+message RiskMetrics {
+    string total_exposure = 1;
+    string max_position_size = 2;
+    string portfolio_concentration = 3;
+    string leverage_ratio = 4;
+    string margin_ratio = 5;
+    string liquidation_risk = 6;
+    string correlation_risk = 7;
+    string market_risk = 8;
+    string liquidity_risk = 9;
+    string operational_risk = 10;
+}
+
+message RiskAlert {
+    string alert_type = 1;
+    string severity = 2;
+    string message = 3;
+    string value = 4;
+    string threshold = 5;
+    google.protobuf.Timestamp triggered_at = 6;
+    bool acknowledged = 7;
+}

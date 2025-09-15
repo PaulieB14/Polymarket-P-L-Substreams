@@ -1,8 +1,8 @@
 specVersion: v0.1.0
 package:
   name: polymarket-pnl
-  version: v0.2.0
-  description: "Polymarket P&L Substreams v0.2.0 - Enhanced with comprehensive negative risk management and real-time profit/loss tracking for prediction markets on Polygon"
+  version: v0.3.1
+  description: "Polymarket P&L Substreams v0.3.1 - Complete Dune Query compatibility with comprehensive negative risk market tracking"
   url: "https://github.com/PaulieB14/Polymarket-PnL-Substreams"
   image: "./polymarket-pnl-icon.png"
 
@@ -24,7 +24,137 @@ binaries:
     file: ./target/wasm32-unknown-unknown/release/substreams.wasm
 
 modules:
-  # CTF Events for P&L Tracking
+  # 1. CTF Exchange TokenRegistered Events
+  - name: map_ctf_exchange_token_registered
+    kind: map
+    initialBlock: 33605403
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.TokenRegisteredEvents
+
+  # 2. NegRisk CTF Exchange TokenRegistered Events (Negative Risk Markets)
+  - name: map_neg_risk_ctf_exchange_token_registered
+    kind: map
+    initialBlock: 50505492
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0xC5d563A36AE78145C45a50134d48A1215220f80a
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.NegRiskTokenRegisteredEvents
+
+  # 3. Fixed Product Market Maker Factory Creation Events
+  - name: map_fpmm_factory_creation
+    kind: map
+    initialBlock: 4023686
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0xa5ef39c3d3e10d0b270233af41cac69796b12966
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.FpmmFactoryEvents
+
+  # 4. CTF Exchange OrderFilled Events
+  - name: map_ctf_exchange_order_filled
+    kind: map
+    initialBlock: 33605403
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.OrderFilledEvents
+
+  # 5. NegRisk CTF Exchange OrderFilled Events (Negative Risk Markets)
+  - name: map_neg_risk_ctf_exchange_order_filled
+    kind: map
+    initialBlock: 50505492
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0xC5d563A36AE78145C45a50134d48A1215220f80a
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.NegRiskOrderFilledEvents
+
+  # 6. Generic ERC1155 TransferSingle Events (all contracts)
+  - name: map_erc1155_transfer_single
+    kind: map
+    initialBlock: 4023686
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_sig:0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.Erc1155TransferSingleEvents
+
+  # 7. Generic ERC1155 TransferBatch Events (all contracts)
+  - name: map_erc1155_transfer_batch
+    kind: map
+    initialBlock: 4023686
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_sig:0x4a39dc06b4d0e7966e8548a714ca43c1363dc4f7197e0d4a342b5f78a2dfb6b0
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.Erc1155TransferBatchEvents
+
+  # 8. Generic ERC20 Transfer Events (all contracts)
+  - name: map_erc20_transfer
+    kind: map
+    initialBlock: 4023686
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_sig:0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.Erc20TransferEvents
+
+  # 9. UMA Merkle Distributor Events
+  - name: map_uma_merkle_distributor
+    kind: map
+    initialBlock: 4023686
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0x3a3bd7bb9528e159577f7c2e685cc81a765002e2
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.MerkleDistributorEvents
+
+  # 10. USDC Merkle Distributor Events
+  - name: map_usdc_merkle_distributor
+    kind: map
+    initialBlock: 4023686
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: evt_addr:0xc288480574783BD7615170660d71753378159c47
+    inputs:
+      - source: sf.ethereum.type.v2.Block
+    output:
+      type: proto:contract.v1.MerkleDistributorEvents
+
+  # 11. CTF Events for P&L Tracking
   - name: map_ctf_events
     kind: map
     initialBlock: 4023686
@@ -37,20 +167,7 @@ modules:
     output:
       type: proto:contract.v1.CtfEvents
 
-  # CTF Exchange Events (Orderbook)
-  - name: map_ctf_exchange_events
-    kind: map
-    initialBlock: 33605403
-    blockFilter:
-      module: ethcommon:index_events
-      query:
-        string: evt_addr:0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e
-    inputs:
-      - source: sf.ethereum.type.v2.Block
-    output:
-      type: proto:contract.v1.CtfExchangeEvents
-
-  # USDC Collateral Token Events
+  # 12. USDC Collateral Token Events
   - name: map_usdc_events
     kind: map
     initialBlock: 4023686
@@ -63,100 +180,25 @@ modules:
     output:
       type: proto:contract.v1.UsdcEvents
 
-  # User Position Tracking
-  - name: map_user_positions
-    kind: map
-    initialBlock: 4023686
-    inputs:
-      - source: sf.ethereum.type.v2.Block
-    output:
-      type: proto:contract.v1.UserPositions
-
-  # P&L Calculations
-  - name: map_pnl_data
-    kind: map
-    initialBlock: 4023686
-    inputs:
-      - source: sf.ethereum.type.v2.Block
-    output:
-      type: proto:contract.v1.PnLData
-
-  # Price Tracking from OrderFilled Events
-  - name: map_price_data
-    kind: map
-    initialBlock: 33605403
-    inputs:
-      - source: sf.ethereum.type.v2.Block
-    output:
-      type: proto:contract.v1.PriceData
-
-  # USDC Position Tracking
-  - name: map_usdc_positions
-    kind: map
-    initialBlock: 4023686
-    inputs:
-      - source: sf.ethereum.type.v2.Block
-    output:
-      type: proto:contract.v1.UsdcPosition
-
-  # Market Metadata Tracking
-  - name: map_market_metadata
-    kind: map
-    initialBlock: 4023686
-    inputs:
-      - source: sf.ethereum.type.v2.Block
-    output:
-      type: proto:contract.v1.MarketMetadata
-
-  # Enhanced P&L with Dune Query Compatibility
-  - name: map_enhanced_pnl
-    kind: map
-    initialBlock: 4023686
-    inputs:
-      - source: sf.ethereum.type.v2.Block
-    output:
-      type: proto:contract.v1.PnLData
-
-  # Negative Risk Exchange Events
-  - name: map_neg_risk_events
+  # 13. Negative Risk Market Analysis - ARBITRAGE DETECTION
+  - name: map_neg_risk_market_analysis
     kind: map
     initialBlock: 50505492
-    blockFilter:
-      module: ethcommon:index_events
-      query:
-        string: evt_addr:0xC5d563A36AE78145C45a50134d48A1215220f80a
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
-      type: proto:contract.v1.NegRiskEvents
+      type: proto:contract.v1.NegRiskMarketAnalysis
 
-  # NegRisk Adapter Events
-  - name: map_neg_risk_adapter_events
-    kind: map
-    initialBlock: 50505403
-    blockFilter:
-      module: ethcommon:index_events
-      query:
-        string: evt_addr:0xd91E80cF2E7be2e162c6513ceD06f1dD0dA35296
-    inputs:
-      - source: sf.ethereum.type.v2.Block
-    output:
-      type: proto:contract.v1.NegRiskEvents
-
-  # NegRisk Wrapped Collateral Events
-  - name: map_neg_risk_collateral_events
+  # 14. Enhanced P&L with Negative Risk Markets
+  - name: map_enhanced_pnl_with_neg_risk
     kind: map
     initialBlock: 4023686
-    blockFilter:
-      module: ethcommon:index_events
-      query:
-        string: evt_addr:0x3A3BD7bb9528E159577F7C2e685CC81A765002E2
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
-      type: proto:contract.v1.NegRiskEvents
+      type: proto:contract.v1.DuneCompatiblePnL
 
-  # Risk Management Module
+  # 15. Risk Management Module
   - name: map_risk_management
     kind: map
     initialBlock: 4023686
