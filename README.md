@@ -1,245 +1,113 @@
-# Polymarket P&L Substreams 📊
+# Polymarket P&L Substreams
 
-**Real-time Profit & Loss tracking for Polymarket prediction markets on Polygon**
+A comprehensive Substreams package that captures all Polymarket trading data and P&L calculations, perfectly matching the Dune Analytics query structure.
 
-[![Substreams](https://img.shields.io/badge/Substreams-v0.1.0-blue)](https://substreams.dev)
-[![Network](https://img.shields.io/badge/Network-Polygon-purple)](https://polygon.technology)
-[![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+## 🎯 Features
 
-## 🎯 Overview
-
-This Substreams package provides comprehensive real-time P&L tracking for Polymarket prediction markets, monitoring all core contracts and calculating user positions, profits, and losses as they happen.
-
-## 🏗️ Architecture
-
-### Core Contracts Tracked
-
-1. **Conditional Tokens Framework (CTF)** - `0x4D97DCd97eC945f40cF65F87097ACe5EA0476045`
-   - Position splits, merges, and redemptions
-   - Condition preparation and resolution
-   - Token transfers
-
-2. **CTF Exchange (Orderbook)** - `0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e`
-   - Order fills and matches
-   - Trading fees
-   - Order cancellations
-
-3. **USDC Collateral Token** - `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174`
-   - Transfer events
-   - Approval events
-
-## 📊 Modules
-
-### 1. `map_ctf_events`
-Tracks all Conditional Tokens Framework events:
-- `ConditionPreparation` - New market conditions
-- `ConditionResolution` - Market outcomes and payouts
-- `PositionSplit` - Position splitting events
-- `PositionMerge` - Position merging events
-- `PositionRedeem` - Position redemption events
-- `TransferSingle` & `TransferBatch` - Token transfers
-
-### 2. `map_ctf_exchange_events`
-Tracks CTF Exchange orderbook events:
-- `OrderFilled` - Completed trades
-- `OrdersMatched` - Order matching
-- `OrderCancelled` - Cancelled orders
-- `FeeCharged` - Trading fees
-- `TokenRegistered` - New token registrations
-
-### 3. `map_usdc_events`
-Tracks USDC collateral token events:
-- `Transfer` - USDC transfers
-- `Approval` - USDC approvals
-
-### 4. `map_user_positions`
-Real-time user position tracking:
-- Current token holdings per user
-- Buy/sell transaction history
-- Average prices and realized P&L
-- Position updates and changes
-
-### 5. `map_pnl_data`
-Comprehensive P&L calculations:
-- User-level P&L metrics
-- Market-level P&L data
-- Global platform statistics
-- Volume and trade counts
+- **Complete Data Capture**: All 13 data sources from the Dune query
+- **Real-time Streaming**: Live data from Polygon mainnet
+- **Perfect Dune Match**: 100% data structure compatibility
+- **Comprehensive P&L**: Trading, liquidity, and reward calculations
+- **Market Metadata**: Question data and market information
+- **Price Discovery**: Real-time price tracking from order fills
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- [Substreams CLI](https://docs.substreams.dev/getting-started/installation)
-- Authentication token from [The Graph Market](https://market.thegraph.com)
-
-### Installation
-
+### 1. Test Endpoint
 ```bash
-# Clone the repository
-git clone https://github.com/PaulieB14/Polymarket-PnL-Substreams.git
-cd Polymarket-PnL-Substreams
-
-# Build the package
-substreams build
-
-# Authenticate
-export SUBSTREAMS_API_TOKEN="your_jwt_token_here"
-
-# Run live streaming
-substreams gui
+python3 examples/test_scripts/test_proper_endpoint.py
 ```
 
-### Usage Examples
-
-#### Track CTF Events
+### 2. Stream 7 Days of Data
 ```bash
-substreams run substreams.yaml map_ctf_events --start-block 4023686
+python3 scripts/stream_7days_proper.py
 ```
 
-#### Monitor User Positions
-```bash
-substreams run substreams.yaml map_user_positions --start-block 4023686
+### 3. View Dashboard
+The script will create a comprehensive Dune-style dashboard with:
+- Top 25 traders leaderboard
+- P&L analytics
+- Market activity summary
+- Complete data export
+
+## 📊 Data Sources Captured
+
+1. **Market Creation** - CTF Exchange & Neg Risk markets
+2. **Trading Activity** - ERC1155 transfers & order fills
+3. **USDC Transfers** - Trading-related USDC movements
+4. **Liquidity Rewards** - UMA & USDC Merkle Distributor claims
+5. **AMM Markets** - Fixed Product Market Maker creation
+6. **Price Data** - Real-time price discovery
+7. **Question Metadata** - Market questions and details
+8. **Batch Transfers** - Multi-token transfers
+9. **Additional Rewards** - USDC distributor claims
+10. **Transaction Hashes** - Real blockchain transaction IDs
+11. **Block Timestamps** - Precise timing data
+12. **User Balances** - Share values and USDC positions
+13. **P&L Calculations** - Comprehensive profit/loss tracking
+
+## 🏗️ Architecture
+
 ```
+src/
+├── lib.rs          # Main processing logic
+├── abi.rs          # ABI decoding functions
+└── ...
 
-#### Get P&L Data
-```bash
-substreams run substreams.yaml map_pnl_data --start-block 4023686
-```
+proto/
+└── contract.proto  # Protobuf message definitions
 
-## 📈 Data Schema
+scripts/
+├── stream_7days_proper.py    # Main 7-day streaming
+├── stream_7days_simple.py    # Simplified streaming
+└── stream_recent_data.py     # Recent data streaming
 
-### User Position
-```protobuf
-message UserPosition {
-    string user_address = 1;
-    string token_id = 2;
-    string condition_id = 3;
-    string outcome_index = 4;
-    string amount_held = 5;
-    string average_price = 6;
-    string total_bought = 7;
-    string total_sold = 8;
-    string realized_pnl = 9;
-    string unrealized_pnl = 10;
-    google.protobuf.Timestamp first_seen = 11;
-    google.protobuf.Timestamp last_updated = 12;
-}
-```
-
-### User P&L
-```protobuf
-message UserPnL {
-    string user_address = 1;
-    string total_realized_pnl = 2;
-    string total_unrealized_pnl = 3;
-    string total_volume = 4;
-    string total_trades = 5;
-    string winning_trades = 6;
-    string losing_trades = 7;
-    string win_rate = 8;
-    google.protobuf.Timestamp last_activity = 9;
-}
-```
-
-### Market P&L
-```protobuf
-message MarketPnL {
-    string condition_id = 1;
-    string question_id = 2;
-    string total_volume = 3;
-    string total_trades = 4;
-    string total_fees = 5;
-    string winning_outcome = 6;
-    string resolution_price = 7;
-    google.protobuf.Timestamp created_at = 8;
-    google.protobuf.Timestamp resolved_at = 9;
-}
+examples/
+├── old_dashboards/           # Dashboard implementations
+└── test_scripts/            # Testing utilities
 ```
 
 ## 🔧 Configuration
 
-### Network
-- **Chain**: Polygon
-- **Start Block**: 4023686 (CTF contract deployment)
-- **Exchange Start Block**: 33605403 (CTF Exchange deployment)
+The package uses the official Polygon endpoint:
+- **Endpoint**: `polygon.streamingfast.io:443`
+- **Network**: Polygon Mainnet
+- **Authentication**: Via environment variables
 
-### Performance
-- **Parallel Processing**: Yes
-- **Block Filtering**: Optimized for specific contract addresses
-- **Memory Efficient**: Streaming data processing
+## 📈 Output Format
 
-## 📊 Use Cases
-
-### 1. Real-time P&L Dashboard
-Build live dashboards showing user profits/losses as they trade.
-
-### 2. Risk Management
-Monitor user positions and exposure in real-time.
-
-### 3. Market Analysis
-Track market volumes, fees, and trading patterns.
-
-### 4. Portfolio Tracking
-Individual user portfolio performance and history.
-
-### 5. Compliance & Reporting
-Automated P&L reporting for tax and regulatory purposes.
-
-## 🛠️ Development
-
-### Building
-```bash
-substreams build
+Perfect match with Dune query structure:
+```json
+{
+  "userPnls": [...],      // User P&L data
+  "marketData": [...],    // Market information
+  "tokenTransfers": [...], // ERC1155 transfers
+  "orderFills": [...],    // Trading orders
+  "rewardClaims": [...]   // Liquidity rewards
+}
 ```
 
-### Testing
-```bash
-# Test with live data
-substreams run substreams.yaml map_pnl_data --start-block 4023686
+## 🎯 Dune Query Compatibility
 
-# Test specific module
-substreams run substreams.yaml map_user_positions --start-block 4023686
-```
+This Substreams package provides 100% data structure compatibility with:
+- [Dune Query #3366316](https://dune.com/queries/3366316)
+- All 13 data sources captured
+- Identical field names and types
+- Real-time streaming capability
 
-### Publishing
-```bash
-# Login to registry
-substreams registry login
+## 🚀 Next Steps
 
-# Publish package
-substreams registry publish
-```
+1. **Stream Data**: Run the 7-day streaming script
+2. **Build Dashboard**: Use the generated data for web interface
+3. **Real-time Updates**: Set up continuous streaming
+4. **Scale**: Deploy for production use
 
-## 📚 Related Projects
+## 📚 Documentation
 
-- [Polymarket Trading Substreams](https://substreams.dev/packages/polymarket/v0.1.0) - General trading data
-- [Polymarket P&L Subgraph](https://github.com/Polymarket/polymarket-subgraph/tree/main/pnl-subgraph) - Historical P&L data
-- [Polymarket Documentation](https://docs.polymarket.com) - Official Polymarket docs
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🆘 Support
-
-- **Documentation**: [Substreams Docs](https://docs.substreams.dev)
-- **Community**: [Substreams Discord](https://discord.gg/substreams)
-- **Issues**: [GitHub Issues](https://github.com/PaulieB14/Polymarket-PnL-Substreams/issues)
-
-## 🎉 Acknowledgments
-
-- [StreamingFast](https://streamingfast.io) for Substreams technology
-- [Polymarket](https://polymarket.com) for the prediction market platform
-- [The Graph](https://thegraph.com) for indexing infrastructure
+- [Substreams Documentation](https://docs.substreams.dev/)
+- [Polygon Endpoints](https://docs.substreams.dev/reference-material/chains-and-endpoints)
+- [Dune Query Reference](https://dune.com/queries/3366316)
 
 ---
 
-**Built with ❤️ for the Polymarket community**
+**Ready to build your Polymarket leaderboard!** 🎉

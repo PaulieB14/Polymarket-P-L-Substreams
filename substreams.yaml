@@ -184,9 +184,14 @@ modules:
   - name: map_pure_dune_pnl
     kind: map
     initialBlock: 4023686
+    blockFilter:
+      module: ethcommon:index_events
+      query:
+        string: "evt_addr:0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e OR evt_addr:0xC5d563A36AE78145C45a50134d48A1215220f80a OR evt_addr:0xa5ef39c3d3e10d0b270233af41cac69796b12966 OR evt_addr:0x4d97dcd97ec945f40cf65f87097ace5ea0476045 OR evt_addr:0x2791bca1f2de4661ed88a30c99a7a9449aa84174 OR evt_addr:0x3a3bd7bb9528e159577f7c2e685cc81a765002e2 OR evt_addr:0xc288480574783BD7615170660d71753378159c47 OR evt_sig:0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62 OR evt_sig:0x4a39dc06b4d0e7966e8548a714ca43c1363dc4f7197e0d4a342b5f78a2dfb6b0 OR evt_sig:0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef"
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
       type: proto:contract.v1.PureDunePnL
+
 
 network: polygon
