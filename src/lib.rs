@@ -16,7 +16,7 @@ use pb::pnl::v1 as pnl;
 use substreams::prelude::*;
 use substreams::store::{StoreAddBigInt, StoreAddInt64, StoreGet, StoreGetProto, StoreSetProto};
 use substreams::Hex;
-use substreams_database_change::pb::database::DatabaseChanges;
+use substreams_database_change::pb::sf::substreams::sink::database::v1::DatabaseChanges;
 use substreams_database_change::tables::Tables;
 use substreams_ethereum::pb::eth::v2 as eth;
 

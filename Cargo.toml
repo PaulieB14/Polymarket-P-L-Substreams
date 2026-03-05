@@ -1,6 +1,6 @@
 [package]
 name = "polymarket_pnl"
-version = "1.0.1"
+version = "1.1.0"
 edition = "2021"
 description = "Polymarket Profit & Loss Substreams with SQL Sink Support"
 repository = "https://github.com/PaulieB14/Polymarket-P-L-Substreams"
@@ -11,11 +11,11 @@ crate-type = ["cdylib"]
 
 [dependencies]
 # Substreams core
-substreams = "0.6"
-substreams-ethereum = "0.10"
+substreams = "0.7"
+substreams-ethereum = "0.11"
 
 # Database sink support
-substreams-database-change = "2.1"
+substreams-database-change = "4.0"
 
 # Protobuf
 prost = "0.13"
@@ -32,7 +32,7 @@ num-traits = "0.2"
 getrandom = { version = "0.2", features = ["custom"] }
 
 [build-dependencies]
-substreams-ethereum = "0.10"
+substreams-ethereum = "0.11"
 anyhow = "1"
 regex = "1"
 
