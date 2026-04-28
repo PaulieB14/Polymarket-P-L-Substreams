@@ -29,15 +29,56 @@
 
 Comprehensive Substreams package for tracking Polymarket P&L with **SQL sink support** for persistent state accumulation. Tracks all trading activity from CTF Exchange and Neg Risk Exchange contracts across **both CLOB v1 and CLOB v2**.
 
-### CLOB v2 ready (since v1.2.0)
+---
 
-Polymarket cut over to [CLOB v2](https://docs.polymarket.com/v2-migration) on **2026-04-28** with redesigned Exchange contracts. The v2 `OrderFilled` event collapses `makerAssetId`/`takerAssetId` into a single `tokenId` plus an explicit `side` (BUY=0/SELL=1) and adds `builder` and `metadata` (bytes32). This package decodes both event shapes and feeds them into the same downstream P&L pipeline:
+## CLOB v2 ready (since v1.2.0)
 
-- **v1 contracts** keep streaming through and after the cutover for historical fidelity (start block: 33,605,403).
-- **v2 contracts** activate automatically when fills appear (deploy block 84,902,353).
-- For v2 fills, `(side, tokenId)` is mapped back into v1-shape `maker_asset_id`/`taker_asset_id` so the existing position/cost-basis/realized-PnL stores keep working unchanged.
-- The `exchange` column on `trades` distinguishes `ctf` / `neg_risk` (v1) from `ctf_v2` / `neg_risk_v2`.
-- No schema migration required.
+Polymarket migrated to [CLOB v2](https://docs.polymarket.com/v2-migration) at the **2026-04-28 ~11:00 UTC** cutover. v2 ships fresh Exchange contracts at new addresses, a redesigned `OrderFilled` event, a different fee model, and a new collateral wrapper (pUSD). This package indexes both contract generations side-by-side so a single P&L pipeline spans the migration.
+
+### What changed in CLOB v2
+
+| Concept | CLOB v1 | CLOB v2 |
+|---------|---------|---------|
+| **Exchange contracts** | `0x4bfb…982e` (CTF) / `0xC5d5…f80a` (NegRisk) | `0xE111…996B` (CTF) / `0xe222…0F59` (NegRisk) — fresh deploys |
+| **Order uniqueness** | `nonce` per maker | `timestamp` (ms) — nonces removed |
+| **Order side** | Inferred from `makerAssetId == 0` | Explicit `side` enum on the order and event (`BUY=0`, `SELL=1`) |
+| **OrderFilled event** | 8 fields, including `makerAssetId` + `takerAssetId` | 10 fields: single `tokenId` + `side` + new `builder` (bytes32) + `metadata` (bytes32) |
+| **Fees** | Embedded in order (`feeRateBps`), maker + taker | Protocol-determined at match time, **taker only**, dynamic per market via `getClobMarketInfo()` |
+| **Collateral (wallet)** | USDC.e directly | **pUSD** — a 1:1-backed ERC-20 wrapper. USDC.e converts via `CollateralOnramp.wrap()` |
+| **Collateral (CTF level)** | USDC.e | USDC.e (unchanged — pUSD is purely wallet-facing) |
+| **Builder attribution** | HMAC headers on API orders | Single `builderCode` (bytes32) on the order, surfaced as `builder` on the event |
+| **EIP-712 domain version** | `"1"` | `"2"` for exchange signing (L1 API auth still `"1"`) |
+| **Open orders at cutover** | — | All wiped during the maintenance window |
+
+### How this package handles it
+
+1. **Contract dispatch.** `map_order_fills` watches all four Exchange addresses (v1 + v2). When a log lands on a v2 contract, it routes to the v2 decoder; v1 contracts still use the original v1 decoder. Both produce the same internal `OrderFilledEvent` shape, so the rest of the pipeline (stores, P&L math, SQL sink) sees one homogeneous stream.
+2. **v2 → v1 field mapping.** The v2 event emits one `tokenId` with an explicit `side`. We synthesize the legacy `maker_asset_id` / `taker_asset_id` pair from `(side, tokenId)` using the same convention as v1 (collateral-side gets `"0"`, the conditional-token side gets the token id). This keeps your existing `WHERE side = 'buy'` queries and the cost-basis store working with zero changes.
+3. **New columns surfaced.** v2's `builder` and `metadata` are decoded but currently land only in the in-memory event (not yet in the SQL trades table — see [Migration to richer v2 schema](#migration-to-richer-v2-schema) below for an opt-in extension).
+4. **Source-of-truth tagging.** The `exchange` column tags every row with which contract emitted it: `ctf` / `neg_risk` (v1) or `ctf_v2` / `neg_risk_v2`. So you can filter, partition, or audit by generation.
+5. **Fee column semantics.** v2 fees are taker-only and protocol-determined; they appear in the same `fee` field but represent a single realized taker fee rather than maker+taker fees.
+6. **No schema migration required.** Existing `trades`, `user_pnl`, `user_positions`, `markets`, `daily_stats` tables work unchanged — v2 fills slot in as additional rows with the new `exchange` values.
+
+### What stays the same
+
+- Same chain (Polygon), same Firehose source, same RPC.
+- Same `map_order_fills` → stores → analytics → `db_out` DAG.
+- Same SQL sink configuration, same leaderboard / whale views.
+- Same start block for historical backfill (33,605,403); v2 fills activate naturally at the v2 deploy block (84,902,353).
+
+### Migration to richer v2 schema
+
+If you want to query v2-specific fields like `builder` (for builder attribution analytics) or `metadata`, you can add columns and surface them in `db_out`:
+
+```sql
+ALTER TABLE trades
+  ADD COLUMN exchange_version VARCHAR(4) DEFAULT 'v1',
+  ADD COLUMN builder VARCHAR(66),
+  ADD COLUMN metadata VARCHAR(66);
+CREATE INDEX idx_trades_builder ON trades(builder) WHERE builder IS NOT NULL;
+```
+
+Then add the matching `.set("builder", ...)` / `.set("metadata", ...)` calls in `db_out` and republish. This is opt-in — the package as shipped doesn't require it.
 
 ### Key Features
 
