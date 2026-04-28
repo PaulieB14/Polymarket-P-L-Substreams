@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://substreams.dev/packages/polymarket-pnl/v1.1.0">
-    <img src="https://img.shields.io/badge/substreams.dev-v1.1.0-blue" alt="Substreams"/>
+  <a href="https://substreams.dev/packages/polymarket-pnl/v1.2.0">
+    <img src="https://img.shields.io/badge/substreams.dev-v1.2.0-blue" alt="Substreams"/>
   </a>
   <a href="https://polygon.technology/">
     <img src="https://img.shields.io/badge/network-Polygon-8247E5" alt="Polygon"/>
@@ -27,12 +27,23 @@
 
 ## Overview
 
-Comprehensive Substreams package for tracking Polymarket P&L with **SQL sink support** for persistent state accumulation. Tracks all trading activity from both CTF Exchange and Neg Risk Exchange contracts.
+Comprehensive Substreams package for tracking Polymarket P&L with **SQL sink support** for persistent state accumulation. Tracks all trading activity from CTF Exchange and Neg Risk Exchange contracts across **both CLOB v1 and CLOB v2**.
+
+### CLOB v2 ready (since v1.2.0)
+
+Polymarket cut over to [CLOB v2](https://docs.polymarket.com/v2-migration) on **2026-04-28** with redesigned Exchange contracts. The v2 `OrderFilled` event collapses `makerAssetId`/`takerAssetId` into a single `tokenId` plus an explicit `side` (BUY=0/SELL=1) and adds `builder` and `metadata` (bytes32). This package decodes both event shapes and feeds them into the same downstream P&L pipeline:
+
+- **v1 contracts** keep streaming through and after the cutover for historical fidelity (start block: 33,605,403).
+- **v2 contracts** activate automatically when fills appear (deploy block 84,902,353).
+- For v2 fills, `(side, tokenId)` is mapped back into v1-shape `maker_asset_id`/`taker_asset_id` so the existing position/cost-basis/realized-PnL stores keep working unchanged.
+- The `exchange` column on `trades` distinguishes `ctf` / `neg_risk` (v1) from `ctf_v2` / `neg_risk_v2`.
+- No schema migration required.
 
 ### Key Features
 
 | Feature | Description |
 |---------|-------------|
+| **CLOB v1 + v2** | Decodes both Exchange generations into the same P&L pipeline |
 | **Real P&L Tracking** | Realized & unrealized P&L with cost basis |
 | **SQL Sink** | PostgreSQL/Clickhouse for persistent state |
 | **Trader Analytics** | Volume, win rate, max drawdown |
@@ -53,13 +64,13 @@ brew install streamingfast/tap/substreams
 substreams auth
 
 # Stream order fills
-substreams run https://spkg.io/PaulieB14/polymarket-pnl-v1.1.0.spkg \
+substreams run https://spkg.io/PaulieB14/polymarket-pnl-v1.2.0.spkg \
   map_order_fills \
   -e polygon.substreams.pinax.network:443 \
   -s 65000000 -t +1000
 
 # Stream user P&L
-substreams run https://spkg.io/PaulieB14/polymarket-pnl-v1.1.0.spkg \
+substreams run https://spkg.io/PaulieB14/polymarket-pnl-v1.2.0.spkg \
   map_user_pnl \
   -e polygon.substreams.pinax.network:443 \
   -s 65000000 -t +1000
@@ -79,12 +90,12 @@ createdb polymarket_pnl
 # Setup schema
 substreams-sink-sql setup \
   "psql://localhost:5432/polymarket_pnl?sslmode=disable" \
-  https://spkg.io/PaulieB14/polymarket-pnl-v1.1.0.spkg
+  https://spkg.io/PaulieB14/polymarket-pnl-v1.2.0.spkg
 
 # Run sink (start from beginning for full history)
 substreams-sink-sql run \
   "psql://localhost:5432/polymarket_pnl?sslmode=disable" \
-  https://spkg.io/PaulieB14/polymarket-pnl-v1.1.0.spkg \
+  https://spkg.io/PaulieB14/polymarket-pnl-v1.2.0.spkg \
   -e polygon.substreams.pinax.network:443
 ```
 
@@ -216,10 +227,24 @@ FROM daily_stats ORDER BY date DESC;
 
 ## Contract Addresses
 
+### CLOB v1 (legacy — historical fills only after the 2026-04-28 cutover)
+
 | Contract | Address | Start Block |
 |----------|---------|-------------|
-| CTF Exchange | `0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e` | 33,605,403 |
-| NegRisk Exchange | `0xC5d563A36AE78145C45a50134d48A1215220f80a` | 50,505,492 |
+| CTF Exchange v1 | `0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e` | 33,605,403 |
+| NegRisk Exchange v1 | `0xC5d563A36AE78145C45a50134d48A1215220f80a` | 50,505,492 |
+
+### CLOB v2 (deployed 2026-03-31 by Polymarket Deployer 1, cutover 2026-04-28)
+
+| Contract | Address |
+|----------|---------|
+| CTF Exchange V2 | `0xE111180000d2663C0091e4f400237545B87B996B` |
+| NegRisk CTF Exchange V2 | `0xe2222d279d744050d28e00520010520000310F59` |
+
+### Other (unchanged)
+
+| Contract | Address | Start Block |
+|----------|---------|-------------|
 | Conditional Tokens | `0x4D97DCd97eC945f40cF65F87097ACe5EA0476045` | 4,023,686 |
 | USDC | `0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174` | 4,023,686 |
 
@@ -241,8 +266,8 @@ substreams run substreams.yaml map_order_fills \
   -s 65000000 -t +100
 
 # Package & publish
-substreams pack substreams.yaml -o polymarket-pnl-v1.1.0.spkg
-substreams publish polymarket-pnl-v1.1.0.spkg
+substreams pack substreams.yaml -o polymarket-pnl-v1.2.0.spkg
+substreams publish polymarket-pnl-v1.2.0.spkg
 ```
 
 ---

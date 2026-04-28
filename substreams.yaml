@@ -1,8 +1,8 @@
 specVersion: v0.1.0
 package:
   name: polymarket-pnl
-  version: v1.1.0
-  description: "Polymarket Profit & Loss Tracking - Real-time P&L with SQL sink support"
+  version: v1.2.0
+  description: "Polymarket Profit & Loss Tracking - Real-time P&L with SQL sink support (CLOB v1 + v2)"
   url: "https://github.com/PaulieB14/Polymarket-P-L-Substreams"
   image: "./polymarket-pnl-icon.png"
 
@@ -41,13 +41,14 @@ modules:
   - name: map_order_fills
     kind: map
     doc: |
-      Extracts OrderFilled events from both CTF Exchange and NegRisk Exchange.
+      Extracts OrderFilled events from CTF Exchange and NegRisk Exchange across
+      both CLOB v1 (legacy) and v2 (deployed 2026-03-31, cutover 2026-04-28).
       This is the primary source of trading activity.
     initialBlock: 33605403
     blockFilter:
       module: ethcommon:index_events
       query:
-        string: "(evt_addr:0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e OR evt_addr:0xC5d563A36AE78145C45a50134d48A1215220f80a)"
+        string: "(evt_addr:0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e OR evt_addr:0xC5d563A36AE78145C45a50134d48A1215220f80a OR evt_addr:0xE111180000d2663C0091e4f400237545B87B996B OR evt_addr:0xe2222d279d744050d28e00520010520000310F59)"
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:

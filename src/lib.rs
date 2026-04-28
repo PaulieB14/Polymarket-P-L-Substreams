@@ -59,9 +59,14 @@ fn unix_to_timestamp(secs: i64) -> String {
 
 substreams_ethereum::init!();
 
-// Contract addresses
+// V1 contract addresses (legacy CLOB — pre-cutover history)
 const CTF_EXCHANGE: [u8; 20] = hex!("4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e");
 const NEG_RISK_EXCHANGE: [u8; 20] = hex!("C5d563A36AE78145C45a50134d48A1215220f80a");
+
+// V2 contract addresses (deployed 2026-03-31, cutover 2026-04-28)
+const CTF_EXCHANGE_V2: [u8; 20] = hex!("E111180000d2663C0091e4f400237545B87B996B");
+const NEG_RISK_EXCHANGE_V2: [u8; 20] = hex!("e2222d279d744050d28e00520010520000310F59");
+
 const USDC_CONTRACT: [u8; 20] = hex!("2791bca1f2de4661ed88a30c99a7a9449aa84174");
 
 // Event signatures
@@ -107,12 +112,21 @@ fn map_order_fills(blk: eth::Block) -> Result<pnl::OrderFills, substreams::error
         for log in &receipt.receipt.logs {
             let is_ctf = log.address == CTF_EXCHANGE;
             let is_neg_risk = log.address == NEG_RISK_EXCHANGE;
+            let is_ctf_v2 = log.address == CTF_EXCHANGE_V2;
+            let is_neg_risk_v2 = log.address == NEG_RISK_EXCHANGE_V2;
 
-            if !is_ctf && !is_neg_risk {
+            if !is_ctf && !is_neg_risk && !is_ctf_v2 && !is_neg_risk_v2 {
                 continue;
             }
 
-            if let Some(decoded) = abi::decode_order_filled(log) {
+            // Dispatch to v2 decoder for v2 contracts (signature differs from v1)
+            let decoded_opt = if is_ctf_v2 || is_neg_risk_v2 {
+                abi::decode_order_filled_v2(log)
+            } else {
+                abi::decode_order_filled(log)
+            };
+
+            if let Some(decoded) = decoded_opt {
                 let maker = format_address(&decoded.maker);
                 let taker = format_address(&decoded.taker);
 
@@ -170,7 +184,14 @@ fn map_order_fills(blk: eth::Block) -> Result<pnl::OrderFills, substreams::error
                     taker_asset_id: decoded.taker_asset_id,
                     maker_amount_filled: decoded.maker_amount_filled,
                     taker_amount_filled: decoded.taker_amount_filled,
-                    exchange: if is_ctf { "ctf" } else { "neg_risk" }.to_string(),
+                    exchange: match (is_ctf, is_neg_risk, is_ctf_v2, is_neg_risk_v2) {
+                        (true, _, _, _) => "ctf",
+                        (_, true, _, _) => "neg_risk",
+                        (_, _, true, _) => "ctf_v2",
+                        (_, _, _, true) => "neg_risk_v2",
+                        _ => "unknown",
+                    }
+                    .to_string(),
                     order_hash: decoded.order_hash,
                 };
 
