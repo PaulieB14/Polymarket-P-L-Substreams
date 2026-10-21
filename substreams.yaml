@@ -1,15 +1,14 @@
 specVersion: v0.1.0
 package:
   name: polymarket-pnl
-  version: v1.2.1
+  version: v1.3.0
   description: "Polymarket Profit & Loss Tracking - Real-time P&L with SQL sink support (CLOB v1 + v2)"
   url: "https://github.com/PaulieB14/Polymarket-P-L-Substreams"
   image: "./polymarket-pnl-icon.png"
 
 imports:
   # SQL sink support
-  database_change: https://github.com/streamingfast/substreams-sink-database-changes/releases/download/v4.0.0/substreams-sink-database-changes-v4.0.0.spkg
-  sql: https://github.com/streamingfast/substreams-sink-sql/releases/download/protodefs-v1.0.7/substreams-sink-sql-protodefs-v1.0.7.spkg
+  database_change: https://github.com/streamingfast/substreams-sink-database-changes/releases/download/v5.0.0/substreams-sink-database-changes-v5.0.0.spkg
   # Ethereum common utilities
   ethcommon: https://spkg.io/streamingfast/ethereum-common-v0.3.0.spkg
 

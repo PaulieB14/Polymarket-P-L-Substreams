@@ -104,7 +104,7 @@ fn format_address(bytes: &[u8]) -> String {
 fn map_order_fills(blk: eth::Block) -> Result<pnl::OrderFills, substreams::errors::Error> {
     let mut fills = pnl::OrderFills {
         block_number: blk.number,
-        block_timestamp: Some(blk.timestamp().clone()),
+        block_timestamp: blk.timestamp().clone().into(),
         ..Default::default()
     };
 
@@ -172,7 +172,7 @@ fn map_order_fills(blk: eth::Block) -> Result<pnl::OrderFills, substreams::error
                     tx_hash: Hex(&receipt.transaction.hash).to_string(),
                     log_index: log.index,
                     block_number: blk.number,
-                    timestamp: Some(blk.timestamp().clone()),
+                    timestamp: blk.timestamp().clone().into(),
                     maker,
                     taker,
                     token_id,
@@ -227,7 +227,7 @@ fn map_token_transfers(blk: eth::Block) -> Result<pnl::TokenTransfers, substream
                         tx_hash: Hex(&receipt.transaction.hash).to_string(),
                         log_index: log.index,
                         block_number: blk.number,
-                        timestamp: Some(blk.timestamp().clone()),
+                        timestamp: blk.timestamp().clone().into(),
                         from_address: from,
                         to_address: to,
                         token_id: decoded.token_id,
@@ -261,7 +261,7 @@ fn map_usdc_transfers(blk: eth::Block) -> Result<pnl::UsdcTransfers, substreams:
                         tx_hash: Hex(&receipt.transaction.hash).to_string(),
                         log_index: log.index,
                         block_number: blk.number,
-                        timestamp: Some(blk.timestamp().clone()),
+                        timestamp: blk.timestamp().clone().into(),
                         from_address: format_address(&decoded.from),
                         to_address: format_address(&decoded.to),
                         amount: decoded.amount,
@@ -438,8 +438,8 @@ fn map_user_pnl(
             max_drawdown: "0".to_string(),
             largest_win: "0".to_string(),
             largest_loss: "0".to_string(),
-            first_trade_at: None,
-            last_trade_at: Some(fills.block_timestamp.clone().unwrap_or_default()),
+            first_trade_at: Default::default(),
+            last_trade_at: (*fills.block_timestamp).clone().into(),
             positions: vec![],
         });
     }
@@ -501,7 +501,7 @@ fn db_out(
 
         let timestamp = fill
             .timestamp
-            .as_ref()
+            .as_option()
             .map(|t| unix_to_timestamp(t.seconds))
             .unwrap_or_else(|| "1970-01-01 00:00:00".to_string());
 
