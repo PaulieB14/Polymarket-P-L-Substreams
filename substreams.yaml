@@ -1,15 +1,13 @@
 specVersion: v0.1.0
 package:
   name: polymarket-pnl
-  version: v1.3.0
-  description: "Polymarket Profit & Loss Tracking - Real-time P&L with SQL sink support (CLOB v1 + v2)"
+  version: v2.0.0
+  description: "Polymarket P&L on Polygon: cost-basis positions, realized/unrealized P&L, fees, resolutions, redemptions and migrations across CLOB v1, v2 and Protocol V2 (ExchangeV3 + PositionManager). SQL sink ready."
   url: "https://github.com/PaulieB14/Polymarket-P-L-Substreams"
   image: "./polymarket-pnl-icon.png"
 
 imports:
-  # SQL sink support
   database_change: https://github.com/streamingfast/substreams-sink-database-changes/releases/download/v5.0.0/substreams-sink-database-changes-v5.0.0.spkg
-  # Ethereum common utilities
   ethcommon: https://spkg.io/streamingfast/ethereum-common-v0.3.0.spkg
 
 protobuf:
@@ -29,187 +27,151 @@ binaries:
 network: polygon
 
 params:
-  # Minimum trade size to track (USDC with 6 decimals)
+  # Minimum fill size written to the trades table, in collateral base units (6 decimals)
   db_out: "min_trade_size=1000000"
 
 modules:
-  #############################################
-  # LAYER 1: Event Extraction (Map Modules)
-  #############################################
-
-  - name: map_order_fills
+  - name: map_events
     kind: map
     doc: |
-      Extracts OrderFilled events from CTF Exchange and NegRisk Exchange across
-      both CLOB v1 (legacy) and v2 (deployed 2026-03-31, cutover 2026-04-28).
-      This is the primary source of trading activity.
+      One pass over each block. Fills (all five exchanges, attributed to the order owner), ERC-1155
+      TransferSingle + TransferBatch from Conditional Tokens and PositionManager only, FeeCharged,
+      resolutions, redemptions, migrations, and the derived per-user cost-basis ledger.
     initialBlock: 33605403
     blockFilter:
       module: ethcommon:index_events
       query:
-        string: "(evt_addr:0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e OR evt_addr:0xC5d563A36AE78145C45a50134d48A1215220f80a OR evt_addr:0xE111180000d2663C0091e4f400237545B87B996B OR evt_addr:0xe2222d279d744050d28e00520010520000310F59)"
+        string: "evt_addr:0x4bfb41d5b3570defd03c39a9a4d8de6bd8b8982e || evt_addr:0xc5d563a36ae78145c45a50134d48a1215220f80a || evt_addr:0xe111180000d2663c0091e4f400237545b87b996b || evt_addr:0xe2222d279d744050d28e00520010520000310f59 || evt_addr:0xe3333700ca9d93003f00f0f71f8515005f6c00aa || evt_addr:0x4d97dcd97ec945f40cf65f87097ace5ea0476045 || evt_addr:0x006f54f7f9a22e0000cc2ab60031000000ae9fef || evt_addr:0x1000008dd9001b968442c1000017eae6e0da00ba || evt_addr:0x200000900045e3b6259600682756002200028933 || evt_addr:0x30000034706c7d8e12009dab006be20000c031a8 || evt_addr:0xa1200000d0002264c9a1698e001292d00e1b00af || evt_addr:0x157ce2d672854c848c9b79c49a8cc6cc89176a49 || evt_addr:0x6a9d222616c90fca5754cd1333cfd9b7fb6a4f74"
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
-      type: proto:pnl.v1.OrderFills
+      type: proto:pnl.v2.Events
 
-  - name: map_token_transfers
+  - name: map_collateral_transfers
     kind: map
-    doc: |
-      Extracts ERC1155 TransferSingle events for position tracking.
-    initialBlock: 4023686
+    doc: ERC-20 Transfer events of pUSD (current collateral) and USDC.e (legacy collateral).
+    initialBlock: 33605403
     blockFilter:
       module: ethcommon:index_events
       query:
-        string: "evt_sig:0xc3d58168c5ae7397731d063d5bbf3d657854427343f4c083240f7aacaa2d0f62"
+        string: "evt_addr:0xc011a7e12a19f7b1f670d46f03b03f3342e82dfb || evt_addr:0x2791bca1f2de4661ed88a30c99a7a9449aa84174"
     inputs:
       - source: sf.ethereum.type.v2.Block
     output:
-      type: proto:pnl.v1.TokenTransfers
+      type: proto:pnl.v2.Events
 
-  - name: map_usdc_transfers
+  - name: store_position_totals
+    kind: store
+    doc: "p:{user}:{token}:bq|bc|q = cumulative bought shares, bought cost, held quantity."
+    initialBlock: 33605403
+    updatePolicy: add
+    valueType: bigint
+    inputs:
+      - map: map_events
+
+  - name: map_migration_carry
     kind: map
-    doc: |
-      Extracts USDC (ERC20) transfer events for collateral tracking.
-    initialBlock: 4023686
-    blockFilter:
-      module: ethcommon:index_events
-      query:
-        string: "evt_addr:0x2791bca1f2de4661ed88a30c99a7a9449aa84174"
+    doc: Cost basis moved from a CTF token to its PositionManager position on PositionMigrated.
+    initialBlock: 33605403
     inputs:
-      - source: sf.ethereum.type.v2.Block
+      - map: map_events
+      - store: store_position_totals
     output:
-      type: proto:pnl.v1.UsdcTransfers
+      type: proto:pnl.v2.RealizedEvents
 
-  #############################################
-  # LAYER 2: State Stores (Accumulation)
-  #############################################
-
-  - name: store_user_positions
+  - name: store_migration_carry
     kind: store
-    doc: |
-      Accumulates user positions per token. Tracks quantity held.
-      Key: {user_address}:{token_id}
+    doc: "Same p:{user}:{token}:bq|bc keys, adjustments from migrations."
     initialBlock: 33605403
     updatePolicy: add
     valueType: bigint
     inputs:
-      - map: map_token_transfers
+      - map: map_migration_carry
 
-  - name: store_user_cost_basis
+  - name: map_realized
+    kind: map
+    doc: Realized P&L (proceeds - shares x average buy cost) for every sell, merge and redemption.
+    initialBlock: 33605403
+    inputs:
+      - map: map_events
+      - store: store_position_totals
+      - store: store_migration_carry
+    output:
+      type: proto:pnl.v2.RealizedEvents
+
+  - name: store_pnl_totals
     kind: store
-    doc: |
-      Tracks total cost basis per user per token for average price calculation.
-      Key: {user_address}:{token_id}
+    doc: "u:{user}:realized|volume|fees|trades|wins|losses, p:{user}:{token}:realized, m:{token}:volume|trades"
     initialBlock: 33605403
     updatePolicy: add
     valueType: bigint
     inputs:
-      - map: map_order_fills
+      - map: map_events
+      - map: map_realized
 
-  - name: store_user_realized_pnl
+  - name: store_pnl_max
     kind: store
-    doc: |
-      Accumulates realized P&L when users sell positions.
-      Key: {user_address}
+    doc: "u:{user}:largest_win, u:{user}:last_trade (unix seconds)"
     initialBlock: 33605403
-    updatePolicy: add
+    updatePolicy: max
     valueType: bigint
     inputs:
-      - map: map_order_fills
+      - map: map_events
+      - map: map_realized
 
-  - name: store_user_volume
+  - name: store_pnl_min
     kind: store
-    doc: |
-      Tracks total trading volume per user.
-      Key: {user_address}
+    doc: "u:{user}:largest_loss, u:{user}:first_trade (unix seconds)"
     initialBlock: 33605403
-    updatePolicy: add
+    updatePolicy: min
     valueType: bigint
     inputs:
-      - map: map_order_fills
-
-  - name: store_user_trade_count
-    kind: store
-    doc: |
-      Tracks number of trades per user.
-      Key: {user_address}
-    initialBlock: 33605403
-    updatePolicy: add
-    valueType: int64
-    inputs:
-      - map: map_order_fills
-
-  - name: store_market_volume
-    kind: store
-    doc: |
-      Tracks total volume per market (token_id).
-      Key: {token_id}
-    initialBlock: 33605403
-    updatePolicy: add
-    valueType: bigint
-    inputs:
-      - map: map_order_fills
+      - map: map_events
+      - map: map_realized
 
   - name: store_latest_prices
     kind: store
-    doc: |
-      Stores latest price per token for unrealized P&L calculation.
-      Key: {token_id}
+    doc: "{token_id} -> last fill price in micro-units (1.0 = 1000000)"
     initialBlock: 33605403
     updatePolicy: set
-    valueType: proto:pnl.v1.TokenPrice
+    valueType: string
     inputs:
-      - map: map_order_fills
-
-  #############################################
-  # LAYER 3: Computed Analytics
-  #############################################
+      - map: map_events
 
   - name: map_user_pnl
     kind: map
-    doc: |
-      Computes real-time P&L for users based on their positions and trades.
-      Outputs user P&L updates when positions change.
+    doc: Per-user P&L and per-position cost basis / unrealized P&L for every user and position touched in the block (BTreeSet order).
     initialBlock: 33605403
     inputs:
-      - map: map_order_fills
-      - store: store_user_positions
-        mode: deltas
-      - store: store_user_cost_basis
-        mode: get
-      - store: store_user_realized_pnl
-        mode: get
+      - map: map_events
+      - map: map_realized
+      - store: store_position_totals
+      - store: store_migration_carry
+      - store: store_pnl_totals
+      - store: store_pnl_max
+      - store: store_pnl_min
       - store: store_latest_prices
-        mode: get
     output:
-      type: proto:pnl.v1.UserPnLUpdates
+      type: proto:pnl.v2.UserPnLUpdates
 
   - name: map_market_stats
     kind: map
-    doc: |
-      Computes market-level statistics (volume, trades, prices).
+    doc: Volume, match count and last price per token traded in the block.
     initialBlock: 33605403
     inputs:
-      - map: map_order_fills
-      - store: store_market_volume
-        mode: deltas
+      - map: map_events
+      - store: store_pnl_totals
+      - store: store_latest_prices
     output:
-      type: proto:pnl.v1.MarketStats
-
-  #############################################
-  # LAYER 4: SQL Sink Output
-  #############################################
+      type: proto:pnl.v2.MarketStats
 
   - name: db_out
     kind: map
-    doc: |
-      Outputs database changes for SQL sink (PostgreSQL/Clickhouse).
-      Creates/updates tables: trades, user_pnl, user_positions, markets
+    doc: "SQL changes for trades, fees, resolutions, redemptions, migrations (insert) and user_pnl, user_positions, markets (upsert)."
     initialBlock: 33605403
     inputs:
       - params: string
-      - map: map_order_fills
+      - map: map_events
       - map: map_user_pnl
       - map: map_market_stats
     output:
