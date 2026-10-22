@@ -1,7 +1,7 @@
 specVersion: v0.1.0
 package:
   name: polymarket-pnl
-  version: v2.0.0
+  version: v2.0.1
   description: "Polymarket P&L on Polygon: cost-basis positions, realized/unrealized P&L, fees, resolutions, redemptions and migrations across CLOB v1, v2 and Protocol V2 (ExchangeV3 + PositionManager). SQL sink ready."
   url: "https://github.com/PaulieB14/Polymarket-P-L-Substreams"
   image: "./polymarket-pnl-icon.png"
