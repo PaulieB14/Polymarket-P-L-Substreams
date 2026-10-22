@@ -772,7 +772,8 @@ fn db_out(
             .set("block_number", ev.block_number).set("block_timestamp", &ts)
             .set("tx_hash", &r.tx_hash).set("source", &r.source).set("holder", &r.holder)
             .set("condition_id", &r.condition_id).set("position_id", &r.position_id)
-            .set("amount", &r.amount).set("payout", &r.payout);
+            .set("amount", if r.amount.is_empty() { "0" } else { r.amount.as_str() })
+            .set("payout", if r.payout.is_empty() { "0" } else { r.payout.as_str() });
     }
     for m in &ev.migrations {
         tables.create_row("migrations", &m.id)

@@ -9,8 +9,8 @@
 </p>
 
 <p align="center">
-  <a href="https://substreams.dev/packages/polymarket-pnl/v2.0.0">
-    <img src="https://img.shields.io/badge/substreams.dev-v2.0.0-blue" alt="Substreams"/>
+  <a href="https://substreams.dev/packages/polymarket-pnl/v2.0.1">
+    <img src="https://img.shields.io/badge/substreams.dev-v2.0.1-blue" alt="Substreams"/>
   </a>
   <a href="https://polygon.technology/">
     <img src="https://img.shields.io/badge/network-Polygon-8247E5" alt="Polygon"/>
@@ -27,9 +27,9 @@
 
 Per-wallet positions, average-cost basis, realized and unrealized P&L, volume, fees, win rate, resolutions, redemptions and Protocol V2 migrations for Polymarket on Polygon. It covers CLOB v1, CLOB v2 and Protocol V2 (ExchangeV3 + PositionManager, pUSD collateral).
 
-## What's new in v2.0.0 (breaking)
+## What's new in v2.0.1 (breaking)
 
-| Area | v1.x | v2.0.0 |
+| Area | v1.x | v2.0.1 |
 |---|---|---|
 | Fills | `map_order_fills` produced **no fills**: its blockFilter joined terms with `OR` (the index query language uses `\|\|`) and used checksummed addresses (index keys are lowercase) | `map_events` uses a lowercase, `\|\|`-joined filter. All five exchanges, including **ExchangeV3** `0xe3333700…` |
 | Positions | TransferSingle from any ERC-1155 contract | TransferSingle **and TransferBatch**, only from Conditional Tokens `0x4D97…` and PositionManager `0x006F54F7…` |
@@ -48,12 +48,12 @@ Per-wallet positions, average-cost basis, realized and unrealized P&L, volume, f
 ## Quick start
 
 ```bash
-substreams run polymarket-pnl@v2.0.0 map_events -s -1000 -t 0 -e polygon.streamingfast.io:443
-substreams run polymarket-pnl@v2.0.0 map_user_pnl -s -1000 -t 0 -e polygon.streamingfast.io:443
+substreams run polymarket-pnl@v2.0.1 map_events -s -1000 -t 0 -e polygon.streamingfast.io:443
+substreams run polymarket-pnl@v2.0.1 map_user_pnl -s -1000 -t 0 -e polygon.streamingfast.io:443
 
 # Postgres (needed for full-history P&L)
-substreams-sink-sql setup "psql://user:pass@localhost:5432/pnl?sslmode=disable" polymarket-pnl@v2.0.0
-substreams-sink-sql run   "psql://user:pass@localhost:5432/pnl?sslmode=disable" polymarket-pnl@v2.0.0
+substreams-sink-sql setup "psql://user:pass@localhost:5432/pnl?sslmode=disable" polymarket-pnl@v2.0.1
+substreams-sink-sql run   "psql://user:pass@localhost:5432/pnl?sslmode=disable" polymarket-pnl@v2.0.1
 ```
 
 ```sql
